@@ -1,6 +1,6 @@
 # README
 
-This is the repository for Earth Hour's campaign crawler.
+This is the repository for Earth Hour Project.
 
 References:  
 [Active Campaign API Wrappers](http://www.activecampaign.com/api/wrappers.php)  
