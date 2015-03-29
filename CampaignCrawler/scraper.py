@@ -14,8 +14,12 @@ import argparse
 
 campaign_paginator_path= './data/campaign_paginator.json'
 campaign_list_path = './data/campaign_list.json'
+campaign_report_open_lists_path = './data/campaign_report_open_lists.json'
+campaign_report_link_lists_path = './data/campaign_report_link_lists.json'
+campaign_report_unsubscribe_lists_path = './data/campaign_report_unsubscribe_lists.json'
 list_paginator_path = './data/list_paginator.json'
 list_list_path = './data/list_list.json'
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # UTILITY
@@ -47,6 +51,60 @@ def write_campaigns():
         json.dump(campaign_list, campaign_list_file)
     campaign_list_file.close()
     print 'Done!'
+    
+def write_campaign_report_open_lists():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator_file = open(campaign_paginator_path, 'ab')
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    json.dump(campaign_paginator, campaign_paginator_file)
+    campaign_paginator_file.close()
+    campaign_report_open_list_file = open(campaign_report_open_lists_path, 'ab')
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
+        campaign_report_open_list = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
+        # TODO paginate if there are more pages in open lists       
+        json.dumps(campaign_report_open_list, campaign_report_open_list_file)
+    campaign_report_open_list_file.close()
+    print 'Done!'
+    
+def write_campaign_report_link_lists():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator_file = open(campaign_paginator_path, 'ab')
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    json.dump(campaign_paginator, campaign_paginator_file)
+    campaign_paginator_file.close()
+    campaign_report_link_list_file = open(campaign_report_link_lists_path, 'ab')
+    
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; messageid='+ str(campaign_row['messageid']) +' ...'
+        campaign_report_link_list = ac.api('campaign/report_link_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']))
+        json.dumps(campaign_report_link_list, campaign_report_link_list_file)
+    campaign_report_link_list_file.close()
+    print 'Done!'
+
+def write_campaign_report_unsubscribe_lists():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator_file = open(campaign_paginator_path, 'ab')
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    json.dump(campaign_paginator, campaign_paginator_file)
+    campaign_paginator_file.close()
+    campaign_report_unsubscribe_list_file = open(campaign_report_unsubscribe_lists_path, 'ab')
+    
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
+        campaign_report_unsubscribe_list = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
+        json.dumps(campaign_report_unsubscribe_list, campaign_report_unsubscribe_list_file)
+    campaign_report_unsubscribe_list_file.close()
+    print 'Done!'
 
 # LISTS
 def write_lists():
@@ -64,20 +122,40 @@ def write_lists():
         json.dump(list_list, list_list_file)
     list_list_file.close()
     print 'Done!'
-
+    
 
 # ---------------------------------------------------------------------------------------------------------------------
 # PRINT
 
-# CAMPAIGN BOUNCE LIST
+# CAMPAIGN REPORT OPEN LIST
 def print_campaign_report_open_lists():
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
     # TODO paginate if there are more pages
     for campaign_row in campaign_paginator['rows']:
         print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        campaign_report_open_list = ac.api('campaign/report_open_list?campaignid='+campaign_row['id'])
+        campaign_report_open_list = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
         print json.dumps(campaign_report_open_list)
+
+# CAMPAIGN REPORT LINK LIST    
+def print_campaign_report_link_lists():
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; messageid='+ str(campaign_row['messageid']) +' ...'
+        campaign_report_link_list = ac.api('campaign/report_link_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']))
+        print json.dumps(campaign_report_link_list)
+
+# CAMPAIGN REPORT UNSUBSCRIBE LIST    
+def print_campaign_report_unsubscribe_lists():
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying unsubscribe list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
+        campaign_report_unsubscribe_list = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
+        print json.dumps(campaign_report_unsubscribe_list)
 
 
 if __name__ == '__main__':
