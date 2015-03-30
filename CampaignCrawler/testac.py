@@ -10,7 +10,7 @@ if __name__ == '__main__':
     
     print ac.api('campaign/report_open_list?campaignid=5&page=1')
     
-    campaign5fwd = ac.api('campaign/report_forward_list?campaignid=5')
+    campaign11fwd = ac.api('campaign/report_forward_list?campaignid=11&messageid=16')
     campaign5fwdtotal = ac.api('campaign/report_forward_totals?campaignid=5')
     
     campaign5link = ac.api('campaign/report_link_list?campaignid=5&messageid=10')
