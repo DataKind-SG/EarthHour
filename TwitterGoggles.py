@@ -603,7 +603,7 @@ def addUserMentions(conn, job_id, tweet) :
 
 		except sql.Error as err :
 
-			verbpse("")
+			verbose("")
 
 			verbose(">>>> Warning: Could not add User Mention: " + str(err))
 
