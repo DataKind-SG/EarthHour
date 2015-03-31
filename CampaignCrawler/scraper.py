@@ -124,8 +124,8 @@ def write_campaign_report_forward_lists():
     campaign_report_forward_list_file = open(campaign_report_forward_lists_path, 'ab')
 
     for campaign_row in campaign_paginator['rows']:
-        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        campaign_report_forward_list = ac.api('campaign/report_forward_list?campaignid=' + campaign_row['id'])
+        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id']  + '; messageid='+ str(campaign_row['messageid']) +' ...'
+        campaign_report_forward_list = ac.api('campaign/report_forward_list?campaignid=' + campaign_row['id']+ '&messageid=' + str(campaign_row['messageid']))
         json.dump(campaign_report_forward_list, campaign_report_forward_list_file)
         campaign_report_forward_list_file.write('\n')
     campaign_report_forward_list_file.close()
@@ -183,6 +183,23 @@ def print_campaign_report_unsubscribe_lists():
         print 'Querying unsubscribe list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
         campaign_report_unsubscribe_list = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
         print json.dumps(campaign_report_unsubscribe_list)
+
+# CAMPAIGN REPORT FORWARD LIST
+def print_campaign_report_forward_lists():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator_file = open(campaign_paginator_path, 'wb')
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # TODO paginate if there are more pages
+    json.dump(campaign_paginator, campaign_paginator_file)
+    campaign_paginator_file.close()
+    campaign_report_forward_list_file = open(campaign_report_forward_lists_path, 'ab')
+
+    for campaign_row in campaign_paginator['rows']:
+        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id']  + '; messageid='+ str(campaign_row['messageid']) +' ...'
+        campaign_report_forward_list = ac.api('campaign/report_forward_list?campaignid=' + campaign_row['id']+ '&messageid=' + str(campaign_row['messageid']))
+        print json.dump(campaign_report_forward_list, campaign_report_forward_list_file)
 
 
 if __name__ == '__main__':
