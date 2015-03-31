@@ -1,6 +1,6 @@
 from includes.ActiveCampaign import ActiveCampaign
 from includes.Config import ACTIVECAMPAIGN_URL, ACTIVECAMPAIGN_API_KEY
-
+import datetime, time
 
 if __name__ == '__main__':
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
@@ -17,7 +17,30 @@ if __name__ == '__main__':
     
     campaign6unsub = ac.api('campaign/report_unsubscription_list?campaignid=6')
     
-    campaign5opentotal = ac.api('campaign/report_open_totals?campaignid=5')    
+    campaign5opentotal = ac.api('campaign/report_open_totals?campaignid=5')
+
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+
+    ## create campaign code
+#    import datetime, time
+#    for x in range(0,20):
+#        sdate = datetime.datetime.now() + datetime.timedelta(hours = 0, minutes = 2) #scheduled campaign
+#        campaign = {
+#            'type': 'single',
+#            'name': 'testActiveCampaign: %s' % datetime.datetime.now(),
+#            'sdate': time.strftime('%Y-%m-%d %H:%M:%S', sdate.timetuple()),
+#            'status': 1,
+#            'public': 1,
+#            'tracklinks': 'all',
+#            'trackreads': 1,
+#            'htmlunsub': 1,
+#            'p[1]': 1, # use list 1 - "gregs"
+#            'm[10]': 100 # use message id 10, send to 100% of list
+#        }
+#        from time import time
+#        time2 = time()
+#        print ac.api('campaign/create', campaign)
+#        print 'diff2 = %.5f seconds' %(time() - time2)
     
     #print ac.api('message/list?ids=10')
 
