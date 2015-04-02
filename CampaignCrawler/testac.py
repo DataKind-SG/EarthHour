@@ -2,7 +2,7 @@ from includes.ActiveCampaign import ActiveCampaign
 from includes.Config import ACTIVECAMPAIGN_URL, ACTIVECAMPAIGN_API_KEY
 import datetime, time
 
-def test_paginator():
+def test_campaign_paginator():
     print 'Testing campaign paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     ## 1. tested that hard limit of campaign paginator is 100 campaigns
@@ -26,6 +26,24 @@ def test_paginator():
             print "outstanding_campaigns in loop:" + str(outstanding_campaigns)
             print "offset in loop:" + str(offset)
             print "rows recorded:" + str(len(campaign_rows))
+            
+def test_open_list_paginator():
+    print 'Testing open list paginator'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    page = 1
+    campaign_id = '11'
+    open_list_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_id + '&page=' + str(page))
+    have_opens = open_list_dict.pop('result_code')
+    open_list_dict.pop('result_message')
+    open_list_dict.pop('result_output')
+    while have_opens == 1:
+        print 'page: ' + str(page)        
+        open_list_list = list(open_list_dict.values())
+        page = page + 1        
+        open_list_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_id + '&page=' + str(page))
+        have_opens = open_list_dict.pop('result_code')
+        open_list_dict.pop('result_message')
+        open_list_dict.pop('result_output')
         
 
 if __name__ == '__main__':
@@ -37,7 +55,7 @@ if __name__ == '__main__':
     crows = campaigns['rows']
     
     # documentation points to limit of 20 items per page
-    campaign5open = ac.api('campaign/report_open_list?campaignid=5&page=2')
+    campaign5open = ac.api('campaign/report_open_list?campaignid=11&page=1')
     print ac.api('campaign/report_open_list?campaignid=5&page=1')
     
     campaign11fwd = ac.api('campaign/report_forward_list?campaignid=11&messageid=16')

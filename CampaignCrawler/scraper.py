@@ -88,7 +88,20 @@ def write_campaign_report_open_lists():
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
         print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        campaign_report_open_list = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
+        #campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
+        page = 1
+        campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
+        have_opens = campaign_report_open_dict.pop('result_code')
+        campaign_report_open_dict.pop('result_message')
+        campaign_report_open_dict.pop('result_output')
+        campaign_report_open_list = list(campaign_report_open_dict.values())
+        while have_opens == 1:
+            page = page + 1        
+            campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
+            have_opens = campaign_report_open_dict.pop('result_code')
+            campaign_report_open_dict.pop('result_message')
+            campaign_report_open_dict.pop('result_output')
+            campaign_report_open_list = list(campaign_report_open_dict.values())
         # TODO paginate if there are more pages in open lists       
         json.dump(campaign_report_open_list, campaign_report_open_list_file)
         campaign_report_open_list_file.write('\n')
