@@ -351,7 +351,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scrape Active Campaign')
     parser.add_argument('--mode', type=str, help="Accepted values: 'write' or 'print'")
     parser.add_argument('--info', type=str, help="Accepted values: 'campaigns', 'lists', 'campaign_report_bounce_list'")
-    args = parser.parse_args('--mode write --info campaign_report_open_lists'.split()) # parser.parse_args()
+    args = parser.parse_args() # parser.parse_args('--mode write --info campaign_report_open_lists'.split())
     function_name = args.mode + '_' + args.info
     if function_name in dir():
         locals()[function_name]()
