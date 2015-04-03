@@ -1,0 +1,9 @@
+column,treatment,arg1,arg2
+twitter handle,semiexact_mapping,mapping_twitter_handle.csv
+postal code,delete_right_characters,4
+birth date,get_year,%Y-%m-%d
+interests,none,
+employment agency,inexact_mapping,mapping_employment_agency.csv,0.8
+school,inexact_mapping,mapping_school.csv,0.9
+tweet,regex_twitter_handles,mapping_twitter_handle.csv
+name,semiexact_mapping,mapping_name.csv
