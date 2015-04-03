@@ -84,26 +84,26 @@ def write_campaign_report_open_lists():
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
-    campaign_report_open_list_file = open(campaign_report_open_lists_path, 'ab')
+    campaign_report_open_list_file = open(campaign_report_open_lists_path, 'wb')
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
         print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
         #campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
-        page = 1
-        campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
-        have_opens = campaign_report_open_dict.pop('result_code')
-        campaign_report_open_dict.pop('result_message')
-        campaign_report_open_dict.pop('result_output')
-        campaign_report_open_list = list(campaign_report_open_dict.values())
-        while have_opens == 1:
+        page = 0
+        campaign_report_open_list = []
+        while True: # there is no do ... while () loop in python
             page = page + 1        
             campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
             have_opens = campaign_report_open_dict.pop('result_code')
             campaign_report_open_dict.pop('result_message')
             campaign_report_open_dict.pop('result_output')
-            campaign_report_open_list = list(campaign_report_open_dict.values())
-        # TODO paginate if there are more pages in open lists       
-        json.dump(campaign_report_open_list, campaign_report_open_list_file)
+            campaign_report_open_list.extend(list(campaign_report_open_dict.values()))
+            if have_opens == 0:
+                break
+        # done?: TODO paginate if there are more pages in open lists
+        out_dict = {'campaign_id':campaign_row['id']}  # store which campaign this list belongs to
+        out_dict['open_list'] = campaign_report_open_list
+        json.dump(out_dict, campaign_report_open_list_file)
         campaign_report_open_list_file.write('\n')
     campaign_report_open_list_file.close()
     print 'Done!'
@@ -127,7 +127,7 @@ def write_campaign_report_link_lists():
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
-    campaign_report_link_list_file = open(campaign_report_link_lists_path, 'ab') 
+    campaign_report_link_list_file = open(campaign_report_link_lists_path, 'wb')
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
         print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; messageid='+ str(campaign_row['messageid']) +' ...'
@@ -156,7 +156,7 @@ def write_campaign_report_unsubscribe_lists():
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
-    campaign_report_unsubscribe_list_file = open(campaign_report_unsubscribe_lists_path, 'ab')
+    campaign_report_unsubscribe_list_file = open(campaign_report_unsubscribe_lists_path, 'wb')
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
         print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
@@ -186,7 +186,7 @@ def write_campaign_report_forward_lists():
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
-    campaign_report_forward_list_file = open(campaign_report_forward_lists_path, 'ab')
+    campaign_report_forward_list_file = open(campaign_report_forward_lists_path, 'wb')
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
         print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id']  + '; messageid='+ str(campaign_row['messageid']) +' ...'
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scrape Active Campaign')
     parser.add_argument('--mode', type=str, help="Accepted values: 'write' or 'print'")
     parser.add_argument('--info', type=str, help="Accepted values: 'campaigns', 'lists', 'campaign_report_bounce_list'")
-    args = parser.parse_args()
+    args = parser.parse_args('--mode write --info campaign_report_open_lists'.split()) # parser.parse_args()
     function_name = args.mode + '_' + args.info
     if function_name in dir():
         locals()[function_name]()
