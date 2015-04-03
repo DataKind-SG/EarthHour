@@ -66,8 +66,22 @@ if __name__ == '__main__':
     campaign6unsub = ac.api('campaign/report_unsubscription_list?campaignid=6')
     
     campaign5opentotal = ac.api('campaign/report_open_totals?campaignid=5')
+    
+    contact = ac.api('contact/view?id=1')
+    
+    contact_list = ac.api('contact/list?ids=1')
+    
+    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
 
-    #ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    ## create contact
+#    contact1 = {
+#        'email': 'johnsmith@acme.com',
+#        'first_name': 'John',
+#        'last_name': 'Smith',
+#        'p[1]': '1', #p[listid] = listid
+#        'status[1]': '1' # status[listid] = 1:active, 2:unsubscribed
+#    }    
+#    print ac.api('contact/add', contact1)
 
     ## create campaign code
 #    import datetime, time
