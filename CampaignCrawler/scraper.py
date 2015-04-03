@@ -20,6 +20,8 @@ campaign_report_unsubscribe_lists_path = './data/campaign_report_unsubscribe_lis
 campaign_report_forward_lists_path = './data/campaign_report_forward_lists.json'
 list_paginator_path = './data/list_paginator.json'
 list_list_path = './data/list_list.json'
+contact_paginator_path = './data/contact_paginator.json'
+contact_list_path = './data/contact_list.json'
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -199,22 +201,65 @@ def write_campaign_report_forward_lists():
 
 # LISTS
 def write_lists():
+    # Paginator is the action that returns a list of campaigns
     print 'Querying list paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    list_paginator_file = open(list_paginator_path, 'ab')
-    list_paginator = ac.api('list/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    # TODO paginate if there are more pages
-    json.dump(list_paginator, list_paginator_file)
-    list_paginator_file.close()
-    list_list_file = open(list_list_path, 'ab')
-    for list_row in list_paginator['rows']:
+    # commented out for campaign pagination support   
+    # list_paginator_file = open(list_paginator_path, 'wb')
+    # list_paginator = ac.api('list/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # json.dump(list_paginator, list_paginator_file)
+    # list_paginator_file.close()
+    # assume hard limit of 100
+    list_paginator = ac.api('list/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    list_rows = list_paginator['rows']
+    if list_paginator['total'] > 100:
+        outstanding_lists = list_paginator['total'] - 100
+        offset = 100
+        while outstanding_lists > 0:
+            list_paginator = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            list_rows.extend(list_paginator['rows'])
+            outstanding_lists = outstanding_lists - 100
+            offset = offset + 100
+    list_list_file = open(list_list_path, 'wb')
+    #for list_row in list_paginator['rows']:
+    for list_row in list_rows:
         print 'Querying \'' + list_row['name'] + '\'; id=' + list_row['id'] +' ...'
         list_list =  ac.api('list/list?ids='+list_row['id'])
         json.dump(list_list, list_list_file)
         list_list_file.write('\n')
     list_list_file.close()
     print 'Done!'
-    
+
+# CONTACTS
+def write_contacts():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying contact paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    # commented out for campaign pagination support   
+    # contact_paginator_file = open(contact_paginator_path, 'wb')
+    # contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # json.dump(contact_paginator, contact_paginator_file)
+    # contact_paginator_file.close()
+    # assume hard limit of 100
+    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    contact_rows = contact_paginator['rows']
+    if contact_paginator['total'] > 100:
+        outstanding_contacts = contact_paginator['total'] - 100
+        offset = 100
+        while outstanding_contacts > 0:
+            contact_paginator = ac.api('contact/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            contact_rows.extend(contact_paginator['rows'])
+            outstanding_contacts = outstanding_contacts - 100
+            offset = offset + 100
+    contact_list_file = open(contact_list_path, 'wb')
+    #for contact_row in contact_paginator['rows']:
+    for contact_row in contact_rows:
+        print 'Querying \'' + contact_row['name'] + '\'; id=' + contact_row['id'] +' ...'
+        contact_list =  ac.api('contact/list?ids='+contact_row['id'])
+        json.dump(contact_list, contact_list_file)
+        contact_list_file.write('\n')
+    contact_list_file.close()
+    print 'Done!'
 
 # ---------------------------------------------------------------------------------------------------------------------
 # PRINT
