@@ -269,7 +269,6 @@ def write_message_lists():
     print 'Querying message list ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     page = 0
-    message_list = []
     message_list_file = open(message_list_path, 'wb')
     while True:
         page = page + 1
