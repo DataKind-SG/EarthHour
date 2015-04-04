@@ -22,6 +22,8 @@ list_paginator_path = './data/list_paginator.json'
 list_list_path = './data/list_list.json'
 contact_paginator_path = './data/contact_paginator.json'
 contact_list_path = './data/contact_list.json'
+# no paginator for message
+message_list_path = './data/message_list.json'
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -102,7 +104,7 @@ def write_campaign_report_open_lists():
             campaign_report_open_list.extend(list(campaign_report_open_dict.values()))
             if have_opens == 0:
                 break
-        # done?: TODO paginate if there are more pages in open lists
+        # done: paginate if there are more pages in open lists
         out_dict = {'campaign_id':campaign_row['id']}  # store which campaign this list belongs to
         out_dict['open_list'] = campaign_report_open_list
         json.dump(out_dict, campaign_report_open_list_file)
@@ -259,6 +261,30 @@ def write_contacts():
         json.dump(contact_list, contact_list_file)
         contact_list_file.write('\n')
     contact_list_file.close()
+    print 'Done!'
+    
+# MESSAGES
+def write_message_lists():
+    # No paginator in API but can request for all messages, subject to paging
+    print 'Querying message list ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    page = 0
+    message_list = []
+    message_list_file = open(message_list_path, 'wb')
+    while True:
+        page = page + 1
+        message_dict = ac.api('message/list?ids=all&page=' + str(page))
+        have_opens = message_dict.pop('result_code')
+        message_dict.pop('result_message')
+        message_dict.pop('result_output')
+        for key in range(len(message_dict)):
+            print 'Querying \'' + message_dict[str(key)]['subject'] + '\'; id=' + message_dict[str(key)]['id'] +' ...'
+            message = ac.api('message/view?id=' + str(message_dict[str(key)]['id']))
+            json.dump(message, message_list_file)
+            message_list_file.write('\n')
+        if have_opens == 0:
+            break
+    message_list_file.close()
     print 'Done!'
 
 # ---------------------------------------------------------------------------------------------------------------------
