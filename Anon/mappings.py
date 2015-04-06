@@ -1,18 +1,19 @@
 import config
 import csv
-import Levenshtein
+import Levenshtein as edit
+import numpy as np
 
 
 class Mappings:
     inexact = dict()
-    semiexact = dict()
     inexact_final = dict()
+    inexact_standard = dict()
+    semiexact = dict()
     semiexact_final = dict()
     twitter_final = dict()
 
     def __init__(self):
         Mappings.c = config.Config()
-
         with open('stopwords.csv', 'r') as stop_reader:
             self.stopwords = file.read(stop_reader).splitlines()
 
@@ -35,18 +36,6 @@ class Mappings:
             standardized = standardized.replace(stopword, '')
         return standardized
 
-    def __get_max_levenshtein(self, standardized, header):
-        max_levensthein = 0
-        max_standardized = ''
-        for key in Mappings.inexact[header]:
-            for pair in Mappings.inexact[header][key]:
-                levenshtein = Levenshtein.ratio(pair[1], standardized)
-                if levenshtein > max_levensthein:
-                    max_levensthein = levenshtein
-                    max_standardized = key
-
-        return max_levensthein, max_standardized
-
     def __add_semiexact_entry(self, header, entry):
         standarized = self.__semi_standardize_string(entry)
         if standarized not in Mappings.semiexact[header]:
@@ -55,19 +44,46 @@ class Mappings:
         else:
             Mappings.semiexact[header][standarized].add(entry)
 
+    def __get_max_jaro_winkler(self, standardized, header):
+        max_jw = 0
+        max_standard = ''
+        for key in Mappings.inexact_standard[header]:
+            jw = edit.jaro_winkler(key, standardized)
+            if jw > max_jw:
+                max_jw = jw
+                max_standard = Mappings.inexact_standard[header][key]
+
+        return max_jw, max_standard
+
     def __add_inexact_entry(self, header, entry):
         standardized = self.__full_standardize_string(entry)
-        if standardized not in Mappings.inexact[header]:
-            levenshtein, close_standardized = self.__get_max_levenshtein(standardized, header)
-            if levenshtein < self.c.inexact[header][1]:
-                Mappings.inexact[header][standardized] = set()
-                Mappings.inexact[header][standardized].add((entry, standardized))
+
+        if standardized not in Mappings.inexact_standard[header]:
+            max_jw, max_standard = self.__get_max_jaro_winkler(standardized, header)
+            if max_jw < self.c.inexact[header][1]:
+                Mappings.inexact_standard[header][standardized] = entry
+                Mappings.inexact[header][entry] = set()
+                Mappings.inexact[header][entry].add(entry)
             else:
-                Mappings.inexact[header][close_standardized].add((entry, standardized))
+                if max_standard not in Mappings.inexact[header]:
+                    Mappings.inexact[header][max_standard] = set()
+
+                Mappings.inexact[header][max_standard].add(entry)
         else:
-            Mappings.inexact[header][standardized].add((entry, standardized))
+            standard = Mappings.inexact_standard[header][standardized]
+            if standard not in Mappings.inexact[header]:
+                Mappings.inexact[header][standard] = set()
+
+            Mappings.inexact[header][standard].add(entry)
 
     def populate_mappings(self, file_name):
+        for header in Mappings.inexact:
+            Mappings.inexact_standard[header] = dict()
+            with open(Mappings.c.inexact[header][2], 'r') as standard_file:
+                all_standard = file.read(standard_file).splitlines()
+                for standard in all_standard:
+                    Mappings.inexact_standard[header][self.__full_standardize_string(standard)] = standard
+
         with open(file_name, 'r') as csvfile:
             original_file_reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for row in original_file_reader:
@@ -79,25 +95,30 @@ class Mappings:
 
     def write_mappings(self):
         for header in Mappings.semiexact:
-            self.__write_mapping(self.c.semiexact[header], Mappings.semiexact[header], False)
+            field_names = "original,anonymized\n"
+            random_permutation = np.random.permutation(range(10000, 99999))
+            alphabetized = sorted(iter(Mappings.semiexact[header].keys()), key=str.lower)
+
+            with open(self.c.semiexact[header], 'w') as mapping_writer:
+                mapping_writer.write(field_names)
+                count = 0
+                for standarized in alphabetized:
+                    for entry in Mappings.semiexact[header][standarized]:
+                        mapping_writer.write(entry + "," + str(random_permutation[count]) + "\n")
+                    count = count + 1
 
         for header in Mappings.inexact:
-            self.__write_mapping('check_' + self.c.inexact[header][0], Mappings.inexact[header], True)
+            field_names = "original,common,anonymized\n"
+            random_permutation = np.random.permutation(range(10000, 99999))
+            alphabetized = sorted(iter(Mappings.inexact[header].keys()), key=str.lower)
 
-    def __write_mapping(self, file_name, structured_map, is_tuple):
-        field_names = "original,anonymized\n"
-        with open(file_name, 'w') as mapping_writer:
-            mapping_writer.write(field_names)
-            count = 0
-            alphabetized = sorted(iter(structured_map.keys()))
-
-            for standarized in alphabetized:
-                for entry in structured_map[standarized]:
-                    if is_tuple:
-                        mapping_writer.write(entry[0] + "," + str(count) + "\n")
-                    else:
-                        mapping_writer.write(entry + "," + str(count) + "\n")
-                count = count + 1
+            with open('check_' + self.c.inexact[header][0], 'w') as mapping_writer:
+                mapping_writer.write(field_names)
+                count = 0
+                for standard in alphabetized:
+                    for entry in Mappings.inexact[header][standard]:
+                        mapping_writer.write("\"%s\",\"%s\",%s\n" % (entry,  standard, str(random_permutation[count])))
+                    count = count + 1
 
     def read_mappings(self):
         for header in Mappings.semiexact:
@@ -125,7 +146,7 @@ class Mappings:
 
 def main():
     # file name should be an argument...
-    file_name = "original_file.csv"
+    file_name = "agency_nm_ref_no.csv"
 
     m = Mappings()
     m.populate_mappings(file_name)

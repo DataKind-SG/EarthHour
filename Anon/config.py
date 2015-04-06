@@ -16,6 +16,6 @@ class Config:
             tokens = line.split(',')
             Config.all[tokens[0]] = tokens[1:]
             if tokens[1] == 'inexact_mapping':
-                Config.inexact[tokens[0]] = (tokens[2], float(tokens[3]))
+                Config.inexact[tokens[0]] = (tokens[2], float(tokens[3]), tokens[4])
             elif tokens[1] == 'semiexact_mapping':
                 Config.semiexact[tokens[0]] = tokens[2]

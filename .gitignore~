@@ -2,6 +2,4 @@
 *.pyc
 data/
 .idea
-*.secret
-*.tar.gz
-*.csv
+twitter_app_consumer_key_*.txt
