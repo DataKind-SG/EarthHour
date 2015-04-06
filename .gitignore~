@@ -1,5 +1,0 @@
-# Compiled Python Files
-*.pyc
-data/
-.idea
-twitter_app_consumer_key_*.txt
