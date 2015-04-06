@@ -5,3 +5,5 @@ data/
 *.secret
 *.tar.gz
 *.csv
+*~
+tweetf0rmParser/.idea
