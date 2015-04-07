@@ -29,15 +29,32 @@ message_list_path = './data/message_list.json'
 # ---------------------------------------------------------------------------------------------------------------------
 # UTILITY
 
-def dict2csv(dictorlist):
-    if type(dictorlist) is dict:
-        print ', '.join(dictorlist.keys())
-    elif type(dictorlist) is list:
-        print ', '.join(dictorlist[0].keys())
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 # ---------------------------------------------------------------------------------------------------------------------
 # WRITE
+
+
+# CAMPAIGN PAGINATOR
+# Paginator is the action that returns a list of campaigns
+def write_campaign_paginator():
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator_file = open(campaign_paginator_path, 'wb')
+    campaign_paginator_dict = {'total':100}
+    offset = 0
+    while campaign_paginator_dict['total'] - offset > 0:
+        campaign_paginator_dict = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+        print str(campaign_paginator_dict['total']) + 'campaigns found'
+        for row in campaign_paginator_dict['rows']:
+            campaign_paginator_file.write(json.dumps(row) + '\n')
+        offset += 100
 
 # CAMPAIGNS
 def write_campaigns():
@@ -163,7 +180,7 @@ def write_campaign_report_unsubscribe_lists():
     campaign_report_unsubscribe_list_file = open(campaign_report_unsubscribe_lists_path, 'wb')
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
-        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
+        print 'Querying unsubscribe list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
         campaign_report_unsubscribe_list = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
         json.dump(campaign_report_unsubscribe_list, campaign_report_unsubscribe_list_file)
         campaign_report_unsubscribe_list_file.write('\n')
@@ -232,7 +249,7 @@ def write_lists():
     list_list_file.close()
     print 'Done!'
 
-# CONTACTS
+# TODO CONTACTS
 def write_contacts():
     # Paginator is the action that returns a list of campaigns
     print 'Querying contact paginator ...'
@@ -289,10 +306,11 @@ def write_message_lists():
 # ---------------------------------------------------------------------------------------------------------------------
 # PRINT
 
-# CAMPAIGN REPORT OPEN LIST
-def print_campaign_report_open_lists():
+
+# CAMPAIGNS
+def print_campaigns():
+    # Paginator is the action that returns a list of campaigns
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    #campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
     campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     campaign_rows = campaign_paginator['rows']
     if campaign_paginator['total'] > 100:
@@ -302,17 +320,44 @@ def print_campaign_report_open_lists():
             campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
-            offset = offset + 100    
-    #for campaign_row in campaign_paginator['rows']:
+            offset = offset + 100
     for campaign_row in campaign_rows:
-        print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        campaign_report_open_list = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
-        print json.dumps(campaign_report_open_list)
+        print 'Querying \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
+        campaign_dict =  ac.api('campaign/list?ids='+campaign_row['id'])
+
+    print 'Done!'
+
+# CAMPAIGN REPORT OPEN LIST
+def print_campaign_report_open_lists():
+    # Paginator is the action that returns a list of campaigns
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    campaign_rows = campaign_paginator['rows']
+    if campaign_paginator['total'] > 100:
+        outstanding_campaigns = campaign_paginator['total'] - 100
+        offset = 100
+        while outstanding_campaigns > 0:
+            campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            campaign_rows.extend(campaign_paginator['rows'])
+            outstanding_campaigns = outstanding_campaigns - 100
+            offset = offset + 100
+    campaign_report_open_list_file = open(campaign_report_open_lists_path, 'wb')
+    for campaign_row in campaign_rows:
+        page = 0
+        while True: # there is no do ... while () loop in python
+            page = page + 1
+            campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
+            have_opens = campaign_report_open_dict.pop('result_code')
+            campaign_report_open_dict.pop('result_message')
+            campaign_report_open_dict.pop('result_output')
+            for user_open in list(campaign_report_open_dict.values()):
+                print campaign_row['id']+','+user_open['times']+','+user_open['tstamp']+','+user_open['subscriberid']+','+user_open['email']
+            if have_opens == 0:
+                break
 
 # CAMPAIGN REPORT LINK LIST    
 def print_campaign_report_link_lists():
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    #campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
     campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     campaign_rows = campaign_paginator['rows']
     if campaign_paginator['total'] > 100:
@@ -322,12 +367,42 @@ def print_campaign_report_link_lists():
             campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
-            offset = offset + 100    
-    #for campaign_row in campaign_paginator['rows']:
+            offset = offset + 100
     for campaign_row in campaign_rows:
-        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; messageid='+ str(campaign_row['messageid']) +' ...'
-        campaign_report_link_list = ac.api('campaign/report_link_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']))
-        print json.dumps(campaign_report_link_list)
+        campaign_report_link_dict = ac.api('campaign/report_link_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']))
+        if campaign_report_link_dict['result_code'] == 1:
+            for k in campaign_report_link_dict.keys():
+                if is_int(k):
+                    link_dict = campaign_report_link_dict[k]
+                    if link_dict.has_key('info'):
+                        for user_dict in link_dict['info']:
+                            row_str = ''
+                            row_str += campaign_row['id'] + ','
+                            row_str += str(campaign_row['messageid']) + ','
+                            row_str += link_dict.get('a_unique','') + ','
+                            row_str += link_dict.get('tracked','') + ','
+                            row_str += link_dict.get('link','') + ','
+                            row_str += link_dict.get('a_total','') + ','
+                            row_str += link_dict.get('id','') + ','
+                            row_str += link_dict.get('name','') + ','
+                            row_str += user_dict.get('subscriberid','') + ','
+                            row_str += user_dict.get('orgname','') + ','
+                            row_str += user_dict.get('times','') + ','
+                            row_str += user_dict.get('phone','') + ','
+                            row_str += user_dict.get('tstamp','') + ','
+                            row_str += user_dict.get('email','')
+                            print row_str
+                    else:
+                        row_str = ''
+                        row_str += campaign_row['id'] + ','
+                        row_str += str(campaign_row['messageid']) + ','
+                        row_str += link_dict.get('a_unique','') + ','
+                        row_str += link_dict.get('tracked','') + ','
+                        row_str += link_dict.get('link','') + ','
+                        row_str += link_dict.get('a_total','') + ','
+                        row_str += link_dict.get('id','') + ','
+                        row_str += link_dict.get('name','') + ',,,,,,'
+                        print row_str
 
 # CAMPAIGN REPORT UNSUBSCRIBE LIST    
 def print_campaign_report_unsubscribe_lists():
@@ -345,16 +420,29 @@ def print_campaign_report_unsubscribe_lists():
             offset = offset + 100    
     #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
-        print 'Querying unsubscribe list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        campaign_report_unsubscribe_list = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
-        print json.dumps(campaign_report_unsubscribe_list)
+        campaign_report_unsubscribe_dict = ac.api('campaign/report_unsubscription_list?campaignid=' + campaign_row['id'])
+        if campaign_report_unsubscribe_dict['result_code'] == 1:
+            for k in campaign_report_unsubscribe_dict.keys():
+                if is_int(k):
+                    unsub_dict = campaign_report_unsubscribe_dict[k]
+                    row_str = ''
+                    row_str += campaign_row['id'] + ','
+                    row_str += unsub_dict.get('first_name','') + ','
+                    row_str += unsub_dict.get('last_name','') + ','
+                    row_str += unsub_dict.get('orgname','') + ','
+                    unsub_reason = unsub_dict.get('unsubreason','')
+                    row_str += (unsub_reason if unsub_reason != None else '') + ','
+                    row_str += unsub_dict.get('udate','') + ','
+                    row_str += unsub_dict.get('subscriberid','') + ','
+                    row_str += unsub_dict.get('phone','') + ','
+                    row_str += unsub_dict.get('tstamp','') + ','
+                    row_str += unsub_dict.get('email','')
+                    print row_str
 
 # CAMPAIGN REPORT FORWARD LIST
 def print_campaign_report_forward_lists():
     # Paginator is the action that returns a list of campaigns
-    print 'Querying campaign paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    #campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
     campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     campaign_rows = campaign_paginator['rows']
     if campaign_paginator['total'] > 100:
@@ -364,12 +452,84 @@ def print_campaign_report_forward_lists():
             campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
-            offset = offset + 100    
-    #for campaign_row in campaign_paginator['rows']:
+            offset = offset + 100
     for campaign_row in campaign_rows:
-        print 'Querying link list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id']  + '; messageid='+ str(campaign_row['messageid']) +' ...'
-        campaign_report_forward_list = ac.api('campaign/report_forward_list?campaignid=' + campaign_row['id']+ '&messageid=' + str(campaign_row['messageid']))
-        print json.dumps(campaign_report_forward_list)
+        campaign_report_forward_dict = ac.api('campaign/report_forward_list?campaignid=' + campaign_row['id']+ '&messageid=' + str(campaign_row['messageid']))
+        if campaign_report_forward_dict['result_code'] == 1:
+            for k in campaign_report_forward_dict.keys():
+                if is_int(k):
+                    fwd_dict = campaign_report_forward_dict[k]
+                    row_str = ''
+                    row_str += campaign_row['id'] + ','
+                    row_str += fwd_dict.get('a_times','') + ','
+                    row_str += fwd_dict.get('subscriberid','') + ','
+                    row_str += fwd_dict.get('brief_message','') + ','
+                    row_str += fwd_dict.get('name_from','') + ','
+                    row_str += fwd_dict.get('tstamp','') + ','
+                    row_str += fwd_dict.get('email_to','') + ','
+                    row_str += fwd_dict.get('messageid','') + ','
+                    row_str += fwd_dict.get('email_from','')
+                    print row_str
+
+# LISTS
+def print_lists():
+    # Paginator is the action that returns a list of campaigns
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    list_paginator = ac.api('list/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    list_rows = list_paginator['rows']
+    if list_paginator['total'] > 100:
+        outstanding_lists = list_paginator['total'] - 100
+        offset = 100
+        while outstanding_lists > 0:
+            list_paginator = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            list_rows.extend(list_paginator['rows'])
+            outstanding_lists = outstanding_lists - 100
+            offset = offset + 100
+    for list_row in list_rows:
+        list_dict =  ac.api('list/list?ids='+list_row['id'])
+        if list_dict['result_code'] == 1:
+            for k in list_dict.keys():
+                if is_int(k):
+                    ls_dict = list_dict[k]
+                    row_str = ''
+                    row_str += ls_dict.get('name','') + ','
+                    row_str += str(ls_dict.get('subscriber_count','')) + ','
+                    row_str += ls_dict.get('userid','') + ','
+                    row_str += ls_dict.get('private','') + ','
+                    row_str += ls_dict.get('cdate','') + ','
+                    row_str += ls_dict.get('id','')
+                    print row_str
+
+# CONTACTS
+def print_contacts():
+    # Paginator is the action that returns a list of campaigns
+    print 'Querying contact paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    # commented out for campaign pagination support
+    # contact_paginator_file = open(contact_paginator_path, 'wb')
+    # contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # json.dump(contact_paginator, contact_paginator_file)
+    # contact_paginator_file.close()
+    # assume hard limit of 100
+    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    contact_rows = contact_paginator['rows']
+    if contact_paginator['total'] > 100:
+        outstanding_contacts = contact_paginator['total'] - 100
+        offset = 100
+        while outstanding_contacts > 0:
+            contact_paginator = ac.api('contact/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            contact_rows.extend(contact_paginator['rows'])
+            outstanding_contacts = outstanding_contacts - 100
+            offset = offset + 100
+    contact_list_file = open(contact_list_path, 'wb')
+    #for contact_row in contact_paginator['rows']:
+    for contact_row in contact_rows:
+        print 'Querying \'' + contact_row['name'] + '\'; id=' + contact_row['id'] +' ...'
+        contact_list =  ac.api('contact/list?ids='+contact_row['id'])
+        json.dump(contact_list, contact_list_file)
+        contact_list_file.write('\n')
+    contact_list_file.close()
+    print 'Done!'
 
 
 if __name__ == '__main__':
