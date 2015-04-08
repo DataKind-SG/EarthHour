@@ -1,35 +1,36 @@
 from includes.ActiveCampaign import ActiveCampaign
 from includes.Config import ACTIVECAMPAIGN_URL, ACTIVECAMPAIGN_API_KEY
-import datetime, time
+import datetime, time, json
 
 if __name__ == '__main__':
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     
-    campaigns = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    crows = campaigns['rows']
+    # campaigns = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    # crows = campaigns['rows']
     
     # documentation points to limit of 20 items per page
-    campaign5open = ac.api('campaign/report_open_list?campaignid=11&page=1')
-    print ac.api('campaign/report_open_list?campaignid=5&page=1')
-    
-    campaign11fwd = ac.api('campaign/report_forward_list?campaignid=11&messageid=16')
-    campaign5fwdtotal = ac.api('campaign/report_forward_totals?campaignid=5')
-    
-    campaign5link = ac.api('campaign/report_link_list?campaignid=5&messageid=10')
-    
-    campaign6unsub = ac.api('campaign/report_unsubscription_list?campaignid=6')
-    
-    campaign5opentotal = ac.api('campaign/report_open_totals?campaignid=5')
-    
-    contact = ac.api('contact/view?id=1')
-    
-    contact_list = ac.api('contact/list?ids=5')
-    
-    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    
-    message_list = ac.api('message/list?ids=all&page=1')
-    
-    message_view = ac.api('message/view?id=10')
+    campaign5open = ac.api('campaign/report_open_list?campaignid=92&page=2')
+    print json.dumps(campaign5open)
+    # print ac.api('campaign/report_open_list?campaignid=5&page=1')
+    #
+    # campaign11fwd = ac.api('campaign/report_forward_list?campaignid=11&messageid=16')
+    # campaign5fwdtotal = ac.api('campaign/report_forward_totals?campaignid=5')
+    #
+    # campaign5link = ac.api('campaign/report_link_list?campaignid=5&messageid=10')
+    #
+    # campaign6unsub = ac.api('campaign/report_unsubscription_list?campaignid=6')
+    #
+    # campaign5opentotal = ac.api('campaign/report_open_totals?campaignid=5')
+    #
+    # contact = ac.api('contact/view?id=1')
+    #
+    # contact_list = ac.api('contact/list?ids=5')
+    #
+    # contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    #
+    # message_list = ac.api('message/list?ids=all&page=1')
+    #
+    # message_view = ac.api('message/view?id=10')
 
     ## create contact
 #    contact1 = {
