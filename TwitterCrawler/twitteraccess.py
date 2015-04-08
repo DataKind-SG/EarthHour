@@ -162,8 +162,8 @@ class TwitterAccess:
             self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
 
             if r.status_code != 200:
-                print 'WARNING: status not 200!!!'
-                self.status[self.current_app_index][endpoint] = 0
+                w.write_line("%s,error,%s" % (user, r.status_code))
+                next_cursor = 0
             else:
                 if include_root:
                     next_cursor = w.write_user_follower_ids(r, user)

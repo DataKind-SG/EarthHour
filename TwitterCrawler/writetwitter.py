@@ -72,6 +72,9 @@ class WriteTwitter:
 
         return next_cursor
 
+    def write_line(self, line):
+        self.file.write("%s\n" % line)
+
     def write_hydrated_users(self, r):
         for user in r.get_iterator():
             line = []
