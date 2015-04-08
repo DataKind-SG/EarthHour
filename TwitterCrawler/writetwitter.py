@@ -2,14 +2,33 @@ import time
 import sys
 import json
 
+
 class WriteTwitter:
-    def __init__(self, filename, header):
+    def __init__(self, filename, header, date_string):
         self.file = open(filename, 'w')
         if len(header) > 0:
             self.file.write("%(header)s\n" % locals())
 
+        self.logfilename = 'logs/' + date_string + '-log.txt'
+        self.errfilename = 'logs/' + date_string + '-errors.txt'
+
     def close(self):
         self.file.close()
+
+    def init_logs(self):
+        with open(self.logfilename, 'w') as log_writer:
+            log_writer.write('filename,n_successful,n_failed,n_total\n')
+
+        with open(self.errfilename, 'w') as err_writer:
+            err_writer.write('filename,user,status_code\n')
+
+    def write_to_log(self, filename, n_successful, n_failed):
+        with open(self.logfilename, 'a') as log_writer:
+            log_writer.write('%s,%s,%s,%s\n' % (filename, str(n_successful), str(n_failed), str(n_successful + n_failed)))
+
+    def write_to_errlog(self, filename, user, status_code):
+        with open(self.errfilename, 'a') as err_writer:
+            err_writer.write('%s,%s,%s\n' % (filename, user, status_code))
 
     def write_tweets(self, r, earliest_date):
 

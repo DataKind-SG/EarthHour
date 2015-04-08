@@ -47,6 +47,7 @@ class TwitterAccess:
                 self.current_app_index = 0
 
             while self.status[self.current_app_index][endpoint] < count_needed:
+                print 'Going to sleep for 5 minutes... zzz...'
                 time.sleep(60 * 5)
                 self.__query_rate_limit_status()
 
@@ -141,7 +142,7 @@ class TwitterAccess:
 
         w.close()
 
-    def paginate_followers(self, user, is_id, include_root, w):
+    def paginate_followers(self, user, is_id, include_root, w, filename):
         endpoint = 'followers'
         self.__update_current_app(endpoint, 1)
 
@@ -158,12 +159,18 @@ class TwitterAccess:
         while next_cursor != 0:
             args['cursor'] = next_cursor
 
-            r = self.app[self.current_app_index].request('followers/ids', args)
+            try:
+                r = self.app[self.current_app_index].request('followers/ids', args)
+            except:
+                w.write_to_errlog(filename, user, 'TwitterRequestError')
+                self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+                return False
+
             self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
 
             if r.status_code != 200:
-                w.write_line("%s,error,%s" % (user, r.status_code))
-                next_cursor = 0
+                w.write_to_errlog(filename, user, str(r.status_code))
+                return False
             else:
                 if include_root:
                     next_cursor = w.write_user_follower_ids(r, user)
@@ -172,6 +179,8 @@ class TwitterAccess:
 
             if self.status[self.current_app_index][endpoint] == 0:
                 self.__update_current_app(endpoint, 1)
+
+        return True
 
     def get_hydrated_users(self, user_ids, w):
         endpoint = 'users'
