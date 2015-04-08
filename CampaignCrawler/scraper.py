@@ -8,6 +8,11 @@ from includes.ActiveCampaign import ActiveCampaign
 from includes.Config import ACTIVECAMPAIGN_URL, ACTIVECAMPAIGN_API_KEY
 import json
 import argparse
+import codecs
+import sys
+
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 # ---------------------------------------------------------------------------------------------------------------------
 # VARS
@@ -54,6 +59,7 @@ def write_campaign_paginator():
         print str(campaign_paginator_dict['total']) + 'campaigns found'
         for row in campaign_paginator_dict['rows']:
             campaign_paginator_file.write(json.dumps(row) + '\n')
+            print row['id'] + ',' + row['uniqueopens']
         offset += 100
 
 # CAMPAIGNS
