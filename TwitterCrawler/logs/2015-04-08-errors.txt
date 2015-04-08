@@ -1,2 +1,0 @@
-filename,user,status_code
-/home/oliver/PycharmProjects/git/EarthHour/TwitterCrawler/crawlLists/in_list_001,-19242202,401
