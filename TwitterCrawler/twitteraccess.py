@@ -47,8 +47,8 @@ class TwitterAccess:
                 self.current_app_index = 0
 
             while self.status[self.current_app_index][endpoint] < count_needed:
-                print 'Going to sleep for 5 minutes... zzz...'
-                time.sleep(60 * 5)
+                print 'Going to sleep for 2 minutes... zzz...'
+                time.sleep(60 * 2)
                 self.__query_rate_limit_status()
 
     # OC: Made some untried and untested changes to this...
@@ -155,7 +155,6 @@ class TwitterAccess:
         else:
             args['screen_name'] = user
 
-
         while next_cursor != 0:
             args['cursor'] = next_cursor
 
@@ -163,10 +162,12 @@ class TwitterAccess:
                 r = self.app[self.current_app_index].request('followers/ids', args)
             except:
                 w.write_to_errlog(filename, user, 'TwitterRequestError')
-                self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
                 return False
 
-            self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+            try:
+                self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+            except:
+                self.status[self.current_app_index][endpoint] -= 1
 
             if r.status_code != 200:
                 w.write_to_errlog(filename, user, str(r.status_code))
