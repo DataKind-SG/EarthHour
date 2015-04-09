@@ -496,8 +496,6 @@ def print_campaign_report_unsubscribe_lists():
                     unsub_dict = campaign_report_unsubscribe_dict[k]
                     row_str = ''
                     row_str += campaign_row['id'] + ','
-                    row_str += unsub_dict.get('first_name','') + ','
-                    row_str += unsub_dict.get('last_name','') + ','
                     row_str += unsub_dict.get('orgname','') + ','
                     unsub_reason = unsub_dict.get('unsubreason','')
                     row_str += (unsub_reason if unsub_reason != None else '') + ','

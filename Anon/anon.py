@@ -48,15 +48,18 @@ class Anon:
             outfile.writelines(str.join(',', infile_reader.fieldnames) + '\n')
             for row in infile_reader:
                 for header in infile_reader.fieldnames:
-                    out_entry = '\"' + self.methods[self.m.c.all[header][0]](row[header], header) + '\"'
+                    out_value = ''
+                    if row[header] != None:
+                        out_value = self.methods[self.m.c.all[header][0]](row[header], header)
+                    out_entry = '\"' + out_value + '\"'
                     outfile.write(out_entry + ',')
                 outfile.write('\n')
 
 
 def main():
     # file names should be passed as argument
-    file_name = "original_file.csv"
-    new_file_name = "anon_file.csv"
+    file_name = "data/earthhour_campaign_report_unsubscribe_lists.csv"
+    new_file_name = "data/campaign_report_unsubscribe_lists_anon.csv"
 
     m = mappings.Mappings()
     m.read_mappings()

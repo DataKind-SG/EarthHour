@@ -14,7 +14,7 @@ class Mappings:
 
     def __init__(self):
         Mappings.c = config.Config()
-        with open('stopwords.csv', 'r') as stop_reader:
+        with open('stopwords.txt', 'r') as stop_reader:
             self.stopwords = file.read(stop_reader).splitlines()
 
         for header in self.c.inexact:
@@ -88,10 +88,12 @@ class Mappings:
             original_file_reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for row in original_file_reader:
                 for header in Mappings.semiexact:
-                    self.__add_semiexact_entry(header, row[header])
+                    if row[header] != None:
+                        self.__add_semiexact_entry(header, row[header])
 
                 for header in Mappings.inexact:
-                    self.__add_inexact_entry(header, row[header])
+                    if row[header] != None:
+                        self.__add_inexact_entry(header, row[header])
 
     def write_mappings(self):
         for header in Mappings.semiexact:
@@ -146,7 +148,7 @@ class Mappings:
 
 def main():
     # file name should be an argument...
-    file_name = "agency_nm_ref_no.csv"
+    file_name = "data/earthhour_campaign_report_unsubscribe_lists.csv"
 
     m = Mappings()
     m.populate_mappings(file_name)

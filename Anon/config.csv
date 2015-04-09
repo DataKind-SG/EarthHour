@@ -1,3 +1,9 @@
 column,treatment,arg1,arg2,arg3
-agency_name,inexact_mapping,agency_name_mapping.csv,0.88,standard_agencies.txt
-other,ignore,,
+email,semiexact_mapping,email_mapping.csv,,
+campaign_id,none
+org_name,none
+unsubreason,none
+udate,none
+subscriberid,none
+phone,none
+tstamp,none
