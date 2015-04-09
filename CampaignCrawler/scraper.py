@@ -1,3 +1,4 @@
+#!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 """
 Script to pull campaigns
@@ -20,6 +21,7 @@ sys.stdout = UTF8Writer(sys.stdout)
 campaign_paginator_path= './data/campaign_paginator.json'
 campaign_list_path = './data/campaign_list.json'
 campaign_report_open_lists_path = './data/campaign_report_open_lists.json'
+campaign_report_unopen_lists_path = './data/campaign_report_unopen_lists.json'
 campaign_report_link_lists_path = './data/campaign_report_link_lists.json'
 campaign_report_unsubscribe_lists_path = './data/campaign_report_unsubscribe_lists.json'
 campaign_report_forward_lists_path = './data/campaign_report_forward_lists.json'
@@ -96,11 +98,6 @@ def write_campaign_report_open_lists():
     # Paginator is the action that returns a list of campaigns
     print 'Querying campaign paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    # commented out for campaign pagination support  
-    #campaign_paginator_file = open(campaign_paginator_path, 'wb')
-    #campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    #json.dump(campaign_paginator, campaign_paginator_file)
-    #campaign_paginator_file.close()
     campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     campaign_rows = campaign_paginator['rows']
     if campaign_paginator['total'] > 100:
@@ -112,29 +109,61 @@ def write_campaign_report_open_lists():
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
     campaign_report_open_list_file = open(campaign_report_open_lists_path, 'wb')
-    #for campaign_row in campaign_paginator['rows']:
     for campaign_row in campaign_rows:
-        print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] +' ...'
-        #campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=1')
         page = 0
         campaign_report_open_list = []
         while True: # there is no do ... while () loop in python
-            page = page + 1        
+            page = page + 1
+            print 'Querying open list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; page='+str(page)+' ...'
             campaign_report_open_dict = ac.api('campaign/report_open_list?campaignid=' + campaign_row['id'] + '&page=' + str(page))
             have_opens = campaign_report_open_dict.pop('result_code')
             campaign_report_open_dict.pop('result_message')
             campaign_report_open_dict.pop('result_output')
-            campaign_report_open_list.extend(list(campaign_report_open_dict.values()))
             if have_opens == 0:
                 break
-        # done: paginate if there are more pages in open lists
+            campaign_report_open_list.extend(list(campaign_report_open_dict.values()))
         out_dict = {'campaign_id':campaign_row['id']}  # store which campaign this list belongs to
         out_dict['open_list'] = campaign_report_open_list
         json.dump(out_dict, campaign_report_open_list_file)
         campaign_report_open_list_file.write('\n')
     campaign_report_open_list_file.close()
     print 'Done!'
-    
+
+ 
+def write_campaign_report_unopen_lists():
+    print 'Querying campaign paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    campaign_rows = campaign_paginator['rows']
+    if campaign_paginator['total'] > 100:
+        outstanding_campaigns = campaign_paginator['total'] - 100
+        offset = 100
+        while outstanding_campaigns > 0:
+            campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            campaign_rows.extend(campaign_paginator['rows'])
+            outstanding_campaigns = outstanding_campaigns - 100
+            offset = offset + 100
+    campaign_report_unopen_list_file = open(campaign_report_unopen_lists_path, 'wb')
+    for campaign_row in campaign_rows:
+        page = 0
+        campaign_report_unopen_list = []
+        while True: # there is no do ... while () loop in python
+            page = page + 1
+            print 'Querying unopen list for \'' + campaign_row['analytics_campaign_name'] + '\'; id=' + campaign_row['id'] + '; messageid='+ str(campaign_row['messageid']) +'; page='+str(page)+' ...'
+            campaign_report_unopen_dict = ac.api('campaign/report_unopen_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']) + '&page=' + str(page))
+            have_unopens = campaign_report_unopen_dict.pop('result_code')
+            campaign_report_unopen_dict.pop('result_message')
+            campaign_report_unopen_dict.pop('result_output')
+            if have_unopens == 0:
+                break
+            campaign_report_unopen_list.extend(list(campaign_report_unopen_dict.values()))
+        out_dict = {'campaign_id':campaign_row['id']}  # store which campaign this list belongs to
+        out_dict['open_list'] = campaign_report_unopen_list
+        json.dump(out_dict, campaign_report_unopen_list_file)
+        campaign_report_unopen_list_file.write('\n')
+    campaign_report_unopen_list_file.close()
+    print 'Done!'
+
 def write_campaign_report_link_lists():
     # Paginator is the action that returns a list of campaigns
     print 'Querying campaign paginator ...'
@@ -225,15 +254,23 @@ def write_campaign_report_forward_lists():
 
 
 # LISTS
+def write_list_paginator():
+    print 'Querying list paginator ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    list_paginator_file = open(list_paginator_path, 'wb')
+    list_paginator_dict = {'total':100}
+    offset = 0
+    while list_paginator_dict['total'] - offset > 0:
+        list_paginator_dict = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+        print str(list_paginator_dict['total']) + ' lists found'
+        for row in list_paginator_dict['rows']:
+            list_paginator_file.write(json.dumps(row) + '\n')
+        offset += 100
+        
 def write_lists():
     # Paginator is the action that returns a list of campaigns
     print 'Querying list paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    # commented out for campaign pagination support   
-    # list_paginator_file = open(list_paginator_path, 'wb')
-    # list_paginator = ac.api('list/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    # json.dump(list_paginator, list_paginator_file)
-    # list_paginator_file.close()
     # assume hard limit of 100
     list_paginator = ac.api('list/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     list_rows = list_paginator['rows']
@@ -246,7 +283,6 @@ def write_lists():
             outstanding_lists = outstanding_lists - 100
             offset = offset + 100
     list_list_file = open(list_list_path, 'wb')
-    #for list_row in list_paginator['rows']:
     for list_row in list_rows:
         print 'Querying \'' + list_row['name'] + '\'; id=' + list_row['id'] +' ...'
         list_list =  ac.api('list/list?ids='+list_row['id'])
@@ -347,7 +383,6 @@ def print_campaign_report_open_lists():
             campaign_rows.extend(campaign_paginator['rows'])
             outstanding_campaigns = outstanding_campaigns - 100
             offset = offset + 100
-    campaign_report_open_list_file = open(campaign_report_open_lists_path, 'wb')
     for campaign_row in campaign_rows:
         page = 0
         while True: # there is no do ... while () loop in python
@@ -356,10 +391,38 @@ def print_campaign_report_open_lists():
             have_opens = campaign_report_open_dict.pop('result_code')
             campaign_report_open_dict.pop('result_message')
             campaign_report_open_dict.pop('result_output')
-            for user_open in list(campaign_report_open_dict.values()):
-                print campaign_row['id']+','+user_open['times']+','+user_open['tstamp']+','+user_open['subscriberid']+','+user_open['email']
             if have_opens == 0:
                 break
+            for user_open in list(campaign_report_open_dict.values()):
+                print campaign_row['id']+','+user_open['times']+','+user_open['tstamp']+','+user_open['subscriberid']+','+user_open['email']
+
+# CAMPAIGN REPORT UNOPEN LIST
+def print_campaign_report_unopen_lists():
+    # Paginator is the action that returns a list of campaigns
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    campaign_paginator = ac.api('campaign/paginator?sort=&offset=0&limit=100&filter=0&public=0')
+    campaign_rows = campaign_paginator['rows']
+    if campaign_paginator['total'] > 100:
+        outstanding_campaigns = campaign_paginator['total'] - 100
+        offset = 100
+        while outstanding_campaigns > 0:
+            campaign_paginator = ac.api('campaign/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+            campaign_rows.extend(campaign_paginator['rows'])
+            outstanding_campaigns = outstanding_campaigns - 100
+            offset = offset + 100
+    for campaign_row in campaign_rows:
+        page = 0
+        while True: # there is no do ... while () loop in python
+            page = page + 1
+            campaign_report_unopen_dict = ac.api('campaign/report_unopen_list?campaignid=' + campaign_row['id'] + '&messageid=' + str(campaign_row['messageid']) + '&page=' + str(page))
+            have_unopens = campaign_report_unopen_dict.pop('result_code')
+            campaign_report_unopen_dict.pop('result_message')
+            campaign_report_unopen_dict.pop('result_output')
+            if have_unopens == 0:
+                break
+            for user_open in list(campaign_report_unopen_dict.values()):
+                print campaign_row['id']+','+user_open['times']+','+user_open['tstamp']+','+user_open['orgname']+','+user_open['phone']+','+user_open['subscriberid']+','+user_open['email']
+
 
 # CAMPAIGN REPORT LINK LIST    
 def print_campaign_report_link_lists():
@@ -476,6 +539,17 @@ def print_campaign_report_forward_lists():
                     row_str += fwd_dict.get('messageid','') + ','
                     row_str += fwd_dict.get('email_from','')
                     print row_str
+
+# LIST PAGINATOR
+def print_list_paginator():
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    list_paginator_dict = {'total':100}
+    offset = 0
+    while list_paginator_dict['total'] - offset > 0:
+        list_paginator_dict = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+        for row in list_paginator_dict['rows']:
+            print row['id']
+        offset += 100
 
 # LISTS
 def print_lists():

@@ -7,3 +7,4 @@ data/
 *.csv
 *~
 tweetf0rmParser/.idea
+.DS_Store
