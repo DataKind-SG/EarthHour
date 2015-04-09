@@ -1,9 +1,11 @@
 import twitteraccess
+import datetime
 import time
 import warnings
 import writetwitter as wt
 import glob
 import os
+
 
 def get_all_chapter_handles():
     with open("earth_hour_chapters.txt", 'r') as chapter_file:
@@ -26,18 +28,30 @@ class Crawl:
         all_chapters = get_all_chapter_handles()
         for chapter in all_chapters:
             w = wt.WriteTwitter('data/followers/' + chapter + '_followers.csv', '')
-            self.ta.paginate_followers(chapter, False, False, w)
+            self.ta.paginate_followers(chapter, False, False, w, '')
             w.close()
 
     def get_followers_of_followers(self):
+        is_init = False
         input_files = glob.glob(os.getcwd() + '/crawlLists/in_list_[0-9][0-9][0-9]')
         for this_file in input_files:
+            n_successful = 0
+            n_failed = 0
             file_number = this_file[-3:]
-            w = wt.WriteTwitter('data/followersOfFollowers/out_list_' + file_number + '.csv', '')
+            w = wt.WriteTwitter('data/followersOfFollowers/out_list_' + file_number + '.csv', '', datetime.date.today().strftime('%Y-%m-%d'))
+            if not is_init:
+                w.init_logs()
+                is_init = True
+
             with open(this_file, 'r') as file_reader:
                 all_lines = file.read(file_reader).splitlines()
                 for line in all_lines:
-                    self.ta.paginate_followers(line, True, True, w)
+                    success = self.ta.paginate_followers(line, True, True, w, file_number)
+                    if success:
+                        n_successful += 1
+                    else:
+                        n_failed += 1
+            w.write_to_log(file_number, n_successful, n_failed)
             w.close()
 
     def get_hydrated_followers(self):

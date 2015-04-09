@@ -8,3 +8,4 @@ data/
 *~
 tweetf0rmParser/.idea
 .DS_Store
+TwitterCrawler/crawlLists
