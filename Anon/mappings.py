@@ -2,6 +2,7 @@ import config
 import csv
 import Levenshtein as edit
 import numpy as np
+# # import os.path
 
 
 class Mappings:
@@ -9,6 +10,7 @@ class Mappings:
     inexact_final = dict()
     inexact_standard = dict()
     semiexact = dict()
+    # # semiexact_prev = dict()
     semiexact_final = dict()
     twitter_final = dict()
 
@@ -22,6 +24,8 @@ class Mappings:
 
         for header in self.c.semiexact:
             Mappings.semiexact[header] = dict()
+            # # if os.path.isfile(self.c.semiexact[header]):
+                # # Mappings.semiexact_prev[header] = self.__read_mapping(self.c.semiexact[header])
 
     def __semi_standardize_string(self, entry):
         standardized = entry.lower()
@@ -98,7 +102,7 @@ class Mappings:
     def write_mappings(self):
         for header in Mappings.semiexact:
             field_names = "original,anonymized\n"
-            random_permutation = np.random.permutation(range(10000, 99999))
+            random_permutation = np.random.permutation(range(100000, 999999))
             alphabetized = sorted(iter(Mappings.semiexact[header].keys()), key=str.lower)
 
             with open(self.c.semiexact[header], 'w') as mapping_writer:
@@ -111,7 +115,7 @@ class Mappings:
 
         for header in Mappings.inexact:
             field_names = "original,common,anonymized\n"
-            random_permutation = np.random.permutation(range(10000, 99999))
+            random_permutation = np.random.permutation(range(100000, 999999))
             alphabetized = sorted(iter(Mappings.inexact[header].keys()), key=str.lower)
 
             with open('check_' + self.c.inexact[header][0], 'w') as mapping_writer:
