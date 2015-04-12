@@ -1,9 +1,2 @@
 column,treatment,arg1,arg2,arg3
 email,semiexact_mapping,email_mapping.csv,,
-campaign_id,none
-org_name,none
-unsubreason,none
-udate,none
-subscriberid,none
-phone,none
-tstamp,none

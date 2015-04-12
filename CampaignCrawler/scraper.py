@@ -268,20 +268,17 @@ def write_list_paginator():
         offset += 100
         
 def write_lists():
-    # Paginator is the action that returns a list of campaigns
     print 'Querying list paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     # assume hard limit of 100
     list_paginator = ac.api('list/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     list_rows = list_paginator['rows']
     if list_paginator['total'] > 100:
-        outstanding_lists = list_paginator['total'] - 100
-        offset = 100
-        while outstanding_lists > 0:
+        offset = 0
+        while list_paginator['total'] - offset > 0:
             list_paginator = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
             list_rows.extend(list_paginator['rows'])
-            outstanding_lists = outstanding_lists - 100
-            offset = offset + 100
+            offset += 100
     list_list_file = open(list_list_path, 'wb')
     for list_row in list_rows:
         print 'Querying \'' + list_row['name'] + '\'; id=' + list_row['id'] +' ...'
