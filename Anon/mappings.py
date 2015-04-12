@@ -2,6 +2,7 @@ import config
 import csv
 import Levenshtein as edit
 import numpy as np
+# # import os.path
 
 
 class Mappings:
@@ -9,6 +10,7 @@ class Mappings:
     inexact_final = dict()
     inexact_standard = dict()
     semiexact = dict()
+    # # semiexact_prev = dict()
     semiexact_final = dict()
     twitter_final = dict()
 
@@ -22,6 +24,8 @@ class Mappings:
 
         for header in self.c.semiexact:
             Mappings.semiexact[header] = dict()
+            # # if os.path.isfile(self.c.semiexact[header]):
+                # # Mappings.semiexact_prev[header] = self.__read_mapping(self.c.semiexact[header])
 
     def __semi_standardize_string(self, entry):
         standardized = entry.lower()

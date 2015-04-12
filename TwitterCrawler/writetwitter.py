@@ -15,13 +15,6 @@ class WriteTwitter:
     def close(self):
         self.file.close()
 
-    def init_logs(self):
-        with open(self.logfilename, 'w') as log_writer:
-            log_writer.write('filename,n_successful,n_failed,n_total\n')
-
-        with open(self.errfilename, 'w') as err_writer:
-            err_writer.write('filename,user,status_code\n')
-
     def write_to_log(self, filename, n_successful, n_failed):
         with open(self.logfilename, 'a') as log_writer:
             log_writer.write('%s,%s,%s,%s\n' % (filename, str(n_successful), str(n_failed), str(n_successful + n_failed)))

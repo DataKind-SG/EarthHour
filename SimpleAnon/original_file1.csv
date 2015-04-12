@@ -1,0 +1,5 @@
+twitter handle,tweet,name
+@asdf,"Hello @qwer",jack
+@qwer,"@asdf, does it work if a handle is at the start of the tweet?",Jill
+@_asdf,"Make sure that emails like a@b.com are not affected",jim
+@QWER ,"twitter trivia: @_ is the husband of @__ and father of @___",jill
