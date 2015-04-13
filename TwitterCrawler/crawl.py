@@ -58,21 +58,30 @@ class Crawl:
             w.close()
             os.system('mv ' + this_file + ' ' + this_file + '_done')
 
-    def get_hydrated_followers(self):
+    # this is broken, need to pass in full path instead of file name
+    def get_hydrated_chapter_followers(self):
         all_chapters = get_all_chapter_handles()
         for chapter in all_chapters:
-            self.__paginate_hydrated_users(chapter)
+            self.__paginate_hydrated_users(chapter, True)
 
-    def __paginate_hydrated_users(self, username):
+    def get_hydrated_users(self):
+        in_lists = glob.glob('crawlLists/hydrated_in_list_[0-9][0-9]')
+        in_lists.sort()
+        for in_list in in_lists:
+            self.__paginate_hydrated_users(in_list, False)
+
+    def __paginate_hydrated_users(self, in_list, has_header):
+        file_number = in_list[-2:]
+
         header = 'user_id,name,screen_name,created_at,description,lang,location,url,time_zone,utc_offset,statuses_count,favourites_count,followers_count,friends_count,listed_count,contributors_enabled,protected,verified'
-        with open('data/chapters/followers/' + username + '_followers.csv', 'r') as id_file:
-            id_file.readline()
+        with open(in_list, 'r') as id_file:
+            if has_header:
+                id_file.readline()
             all_ids = id_file.read().splitlines()
 
         n_ids = len(all_ids)
         new_counter = 0
-
-        w = wt.WriteTwitter('data/followers/' + username + '_hydrated_followers.csv', header)
+        w = wt.WriteTwitter('data/users/hydrated_out_list_' + file_number + '.csv', header, datetime.date.today().strftime('%Y-%m-%d'))
 
         while new_counter < n_ids:
             old_counter = new_counter
@@ -84,6 +93,7 @@ class Crawl:
                 success = self.ta.get_hydrated_users(user_ids, w)
 
         w.close()
+        os.system('mv ' + in_list + ' ' + in_list + '_done')
 
     # Hacky hack hack...
     def get_hashtag_tweets(self, hashtags):
@@ -108,15 +118,19 @@ def main():
         warnings.simplefilter('once')
         r = Crawl(apps_file)
 
-        r.get_followers_of_followers()
+        # r.get_followers_of_followers()
 
         # r.get_chapter_tweets(earliest_date)
         # r.get_hashtag_tweets(hashtags)
 
+
         # r.get_hydrated_followers()
         # r.get_chapter_followers()
 
+        r.get_hydrated_users()
         # r.get_retweeter_users('asdf')
+
+
 
 if __name__ == "__main__":
     main()

@@ -188,14 +188,19 @@ class TwitterAccess:
         self.__update_current_app(endpoint, 1)
 
         args = {'user_id': user_ids,
-                'include_entities': 'true'}
+                'include_entities': 'false'}
+        try:
+            r = self.app[self.current_app_index].request('users/lookup', args)
+        except:
+            return False
 
-        r = self.app[self.current_app_index].request('users/lookup', args)
-        self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+        try:
+            self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+        except:
+            self.status[self.current_app_index][endpoint] -= 1
 
         if r.status_code != 200:
             print 'WARNING: status not 200!!!'
-            self.status[self.current_app_index][endpoint] = 0
             success = False
         else:
             w.write_hydrated_users(r)

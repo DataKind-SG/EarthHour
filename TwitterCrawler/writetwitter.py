@@ -95,22 +95,26 @@ class WriteTwitter:
             line.append(user['screen_name'])
 
             created_at = time.strptime(user['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
-            line.append(time.strftime('%Y-%m-%d %H:%M:%S', created_at))
+            line.append(time.strftime('%Y-%m-%d', created_at))
 
             line.append("\"%s\"" % user['description'])
             line.append(user['lang'])
             line.append("\"%s\"" % user['location'])
-
-            if user['profile_location'] is not None:
-                print 'PROFILE_LOCATION!!!'
 
             if user['url'] is not None:
                 line.append(user['url'])
             else:
                 line.append('')
 
-            line.append(str(user['time_zone']))
-            line.append(str(user['utc_offset']))
+            if user['time_zone'] is not None:
+                line.append(str(user['time_zone']))
+            else:
+                line.append('')
+
+            if user['utc_offset'] is not None:
+                line.append(str(user['utc_offset']))
+            else:
+                line.append('')
 
             line.append(str(user["statuses_count"]))
             line.append(str(user["favourites_count"]))
