@@ -134,7 +134,7 @@ class Mappings:
             Mappings.inexact_final[header] = self.__read_mapping(self.c.inexact[header][0])
 
         # shouldn't be hard coded, but...
-        Mappings.twitter_final = self.__read_mapping('mapping_twitter_handle.csv')
+        #Mappings.twitter_final = self.__read_mapping('mapping_twitter_handle.csv')
 
     def __read_mapping(self, file_name):
         with open(file_name, 'r') as mapping_reader:
@@ -152,10 +152,12 @@ class Mappings:
 
 def main():
     # file name should be an argument...
-    file_name = "data/earthhour_campaign_report_unsubscribe_lists.csv"
+    file_names = ["data/earthhour_campaign_report_unsubscribe_lists.csv", "data/earthhour_campaign_report_unopen_lists.csv", "data/earthhour_campaign_report_open_lists.csv", "data/earthhour_campaign_report_link_lists.csv"]
 
     m = Mappings()
-    m.populate_mappings(file_name)
+    for file_name in file_names:
+        m.populate_mappings(file_name)
+        print file_name
     m.write_mappings()
 
 if __name__ == '__main__':

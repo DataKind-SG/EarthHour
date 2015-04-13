@@ -47,19 +47,22 @@ class Anon:
             infile_reader = csv.DictReader(infile, delimiter=',', quotechar='"')
             outfile.writelines(str.join(',', infile_reader.fieldnames) + '\n')
             for row in infile_reader:
+                out_entries = []
                 for header in infile_reader.fieldnames:
                     out_value = ''
-                    if row[header] != None:
-                        out_value = self.methods[self.m.c.all[header][0]](row[header], header)
-                    out_entry = '\"' + out_value + '\"'
-                    outfile.write(out_entry + ',')
-                outfile.write('\n')
+                    if row[header] is not None:
+                        if header in self.m.c.all:
+                            out_value = self.methods[self.m.c.all[header][0]](row[header], header)
+                        else:
+                            out_value = row[header]
+                    out_entries.append(out_value) # '\"' + out_value + '\"'
+                outfile.write(str.join(',', out_entries) + '\n')
 
 
 def main():
     # file names should be passed as argument
     file_name = "data/earthhour_campaign_report_unsubscribe_lists.csv"
-    new_file_name = "data/campaign_report_unsubscribe_lists_anon.csv"
+    new_file_name = "data/campaign_report_unsubscribe_lists.csv"
 
     m = mappings.Mappings()
     m.read_mappings()

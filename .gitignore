@@ -9,5 +9,3 @@ data/
 tweetf0rmParser/
 .DS_Store
 TwitterCrawler/crawlLists
-CampaignCrawler/includes/Config.py
-!original_file*.csv

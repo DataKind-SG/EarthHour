@@ -268,20 +268,17 @@ def write_list_paginator():
         offset += 100
         
 def write_lists():
-    # Paginator is the action that returns a list of campaigns
     print 'Querying list paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
     # assume hard limit of 100
     list_paginator = ac.api('list/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     list_rows = list_paginator['rows']
     if list_paginator['total'] > 100:
-        outstanding_lists = list_paginator['total'] - 100
-        offset = 100
-        while outstanding_lists > 0:
+        offset = 0
+        while list_paginator['total'] - offset > 0:
             list_paginator = ac.api('list/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
             list_rows.extend(list_paginator['rows'])
-            outstanding_lists = outstanding_lists - 100
-            offset = offset + 100
+            offset += 100
     list_list_file = open(list_list_path, 'wb')
     for list_row in list_rows:
         print 'Querying \'' + list_row['name'] + '\'; id=' + list_row['id'] +' ...'
@@ -292,33 +289,63 @@ def write_lists():
     print 'Done!'
 
 # TODO CONTACTS
-def write_contacts():
-    # Paginator is the action that returns a list of campaigns
+def write_contact_paginator():
+     # Paginator is the action that returns a list of campaigns
     print 'Querying contact paginator ...'
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
-    # commented out for campaign pagination support   
-    # contact_paginator_file = open(contact_paginator_path, 'wb')
-    # contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
-    # json.dump(contact_paginator, contact_paginator_file)
-    # contact_paginator_file.close()
-    # assume hard limit of 100
-    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=100&filter=0&public=0')
-    contact_rows = contact_paginator['rows']
-    if contact_paginator['total'] > 100:
-        outstanding_contacts = contact_paginator['total'] - 100
-        offset = 100
-        while outstanding_contacts > 0:
-            contact_paginator = ac.api('contact/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
-            contact_rows.extend(contact_paginator['rows'])
-            outstanding_contacts = outstanding_contacts - 100
-            offset = offset + 100
+    contact_paginator_file = open(contact_paginator_path, 'wb')
+    contact_paginator = {'total':100}
+    offset = 0
+    while contact_paginator['total'] - offset > 0:
+        print 'querying offset ' + str(offset) + ' out of ' + str(contact_paginator['total'])
+        contact_paginator = ac.api('contact/paginator?sort=&offset='+str(offset)+'&limit=100&filter=0&public=0')
+        contact_rows = contact_paginator['rows']
+        for contact in contact_rows:
+            json.dump(contact, contact_paginator_file)
+            contact_paginator_file.write('\n')
+        offset += 100
+
+def write_contacts():
+    # NOTE:
+    # write contacts work differently from the other paginator based queries
+    # Instead of collecting the paginator in memory before running the detail API calls
+    # the paginator has to be run separately. The paginator results are then read here from a file.
+    print 'Reading contact paginator json ...'
+    ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
+    contact_paginator_file = open(contact_paginator_path, 'rb')
     contact_list_file = open(contact_list_path, 'wb')
-    #for contact_row in contact_paginator['rows']:
-    for contact_row in contact_rows:
-        print 'Querying \'' + contact_row['name'] + '\'; id=' + contact_row['id'] +' ...'
-        contact_list =  ac.api('contact/list?ids='+contact_row['id'])
-        json.dump(contact_list, contact_list_file)
-        contact_list_file.write('\n')
+    id_list = []
+    total = 0
+    i = 0
+    for line in contact_paginator_file: # read and parse line by line
+        contact_row = json.loads(line)
+        # query 20 by 20
+        i += 1
+        total += 1
+        if i <= 20:
+            id_list.append(contact_row['id'])
+        if i == 20:
+            print 'Querying ids=' + ','.join(id_list) +' ...'
+            contact_list = ac.api('contact/list?ids='+','.join(id_list))
+            result_code = contact_list.pop('result_code')
+            contact_list.pop('result_message')
+            contact_list.pop('result_output')
+            if result_code == 1:
+                for contact in list(contact_list.values()):
+                    json.dump(contact, contact_list_file)
+                    contact_list_file.write('\n')
+            i = 0
+            id_list = []
+    if len(id_list) > 0:  # repetitive code... ugly
+        contact_list = ac.api('contact/list?ids='+','.join(id_list))
+        result_code = contact_list.pop('result_code')
+        contact_list.pop('result_message')
+        contact_list.pop('result_output')
+        if result_code == 1:
+            for contact in list(contact_list.values()):
+                json.dump(contact, contact_list_file)
+                contact_list_file.write('\n')
+    contact_paginator_file.close()
     contact_list_file.close()
     print 'Done!'
     
@@ -614,7 +641,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scrape Active Campaign')
     parser.add_argument('--mode', type=str, help="Accepted values: 'write' or 'print'")
     parser.add_argument('--info', type=str, help="Accepted values: 'campaigns', 'lists', 'campaign_report_bounce_list'")
-    args = parser.parse_args() # parser.parse_args('--mode write --info campaign_report_open_lists'.split())
+    args = parser.parse_args() # parser.parse_args('--mode write --info contacts'.split())
     function_name = args.mode + '_' + args.info
     if function_name in dir():
         locals()[function_name]()
