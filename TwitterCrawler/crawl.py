@@ -5,6 +5,7 @@ import warnings
 import writetwitter as wt
 import glob
 import os
+import multiprocessing
 
 def get_all_chapter_handles():
     with open("earth_hour_chapters.txt", 'r') as chapter_file:
@@ -64,11 +65,15 @@ class Crawl:
         for chapter in all_chapters:
             self.__paginate_hydrated_users(chapter, True)
 
-    def get_hydrated_users(self):
-        in_lists = glob.glob('crawlLists/hydrated_in_list_[0-9][0-9]')
+    def get_hydrated_users(self, lol_file):
+        with open(lol_file, 'r') as lol_reader:
+            in_lists = file.read(lol_reader).splitlines()
+
         in_lists.sort()
         for in_list in in_lists:
-            self.__paginate_hydrated_users(in_list, False)
+            file_name = 'crawlLists/' + in_list
+            if os.path.isfile(file_name):
+                self.__paginate_hydrated_users(file_name, False)
 
     def __paginate_hydrated_users(self, in_list, has_header):
         file_number = in_list[-2:]
@@ -81,7 +86,8 @@ class Crawl:
 
         n_ids = len(all_ids)
         new_counter = 0
-        w = wt.WriteTwitter('data/users/hydrated_out_list_' + file_number + '.csv', header, datetime.date.today().strftime('%Y-%m-%d'))
+        file_name = 'data/users/hydrated_out_list_' + file_number + '.csv'
+        w = wt.WriteTwitter(file_name, header, datetime.date.today().strftime('%Y-%m-%d'))
 
         while new_counter < n_ids:
             old_counter = new_counter
@@ -107,16 +113,24 @@ class Crawl:
             self.ta.paginate_retweeters(2343)
 
 
-def main():
+def worker(i):
+    apps_file = 'twitter_apps_consumer_key_' + str(i) + '.secret'
+    r = Crawl(apps_file)
+    r.get_hydrated_users('lol_' + str(i))
 
+
+def main():
     earliest_date = time.strptime('2014-03-01', '%Y-%m-%d')
     hashtags = ['EarthHour', 'climatechange', 'yourpower', 'useyourpower']
 
-    apps_file = 'twitter_apps_consumer_key.secret'
+    jobs = []
 
     with warnings.catch_warnings():
         warnings.simplefilter('once')
-        r = Crawl(apps_file)
+        for i in range(0, 2):
+            p = multiprocessing.Process(target=worker, args=(i,))
+            jobs.append(p)
+            p.start()
 
         # r.get_followers_of_followers()
 
@@ -127,7 +141,6 @@ def main():
         # r.get_hydrated_followers()
         # r.get_chapter_followers()
 
-        r.get_hydrated_users()
         # r.get_retweeter_users('asdf')
 
 
