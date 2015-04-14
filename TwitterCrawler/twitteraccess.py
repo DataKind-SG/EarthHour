@@ -47,8 +47,8 @@ class TwitterAccess:
                 self.current_app_index = 0
 
             while self.status[self.current_app_index][endpoint] < count_needed:
-                print 'Going to sleep for 2 minutes... zzz...'
-                time.sleep(60 * 2)
+                print 'Going to sleep for 30 seconds... zzz...'
+                time.sleep(30)
                 self.__query_rate_limit_status()
 
     # OC: Made some untried and untested changes to this...
