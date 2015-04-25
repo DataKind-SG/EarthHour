@@ -150,13 +150,30 @@ class ParseFollowers:
         print 'Unique count is: ' + str(unique_count)
 
 
+def extract_location():
+    with open('data/users_d2/users_d2.csv', 'r') as users_reader:
+        with open('data/users_d2/users_loc_d2.csv', 'w') as loc_writer:
+            loc_writer.write('anon_id,location\n')
+            csv_reader = csv.DictReader(users_reader)
+
+            line_count = 0
+            for row in csv_reader:
+                if row['location'] is not None:
+                    if len(row['location']) > 0:
+                        loc_writer.write('%s,"%s"\n' % (row['anon_id'], row['location']))
+                line_count += 1
+                if line_count % 500000 == 0:
+                    print line_count
+
+
 def main():
-    p = ParseFollowers()
+    # p = ParseFollowers()
     # p.parse_followers()
     # p. filter_test_in_lists()
     # p.filter_test_out_lists()
-    p.get_unique_d2()
+    # p.get_unique_d2()
 
+    extract_location()
 
 if __name__ == "__main__":
     main()

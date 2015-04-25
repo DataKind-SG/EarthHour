@@ -47,8 +47,8 @@ class TwitterAccess:
                 self.current_app_index = 0
 
             while self.status[self.current_app_index][endpoint] < count_needed:
-                print 'Going to sleep for 30 seconds... zzz...'
-                time.sleep(30)
+                print 'Going to sleep for 2 minutes... zzz...'
+                time.sleep(60 * 2)
                 self.__query_rate_limit_status()
 
     # OC: Made some untried and untested changes to this...
@@ -74,7 +74,7 @@ class TwitterAccess:
             self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
 
             if r.status_code != 200:
-                print 'WARNING: status not 200!!!'
+                print r.status_code
                 self.__update_current_app(endpoint, 16 - counter)
             else:
                 next_max_id, is_last = w.write_tweets(r, earliest_date)
@@ -192,15 +192,23 @@ class TwitterAccess:
         try:
             r = self.app[self.current_app_index].request('users/lookup', args)
         except:
+            print 'Exception thrown 1: '
+            print self.app[self.current_app_index]
             return False
 
         try:
             self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
         except:
+            print 'Exception thrown 2: '
+            print self.app[self.current_app_index]
             self.status[self.current_app_index][endpoint] -= 1
 
-        if r.status_code != 200:
-            print 'WARNING: status not 200!!!'
+        if r.status_code == 404:
+            success = True
+        elif r.status_code != 200:
+            print 'Exception 3: '
+            print self.app[self.current_app_index]
+            print r.status_code
             success = False
         else:
             w.write_hydrated_users(r)
