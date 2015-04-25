@@ -1,6 +1,6 @@
 from includes.ActiveCampaign import ActiveCampaign
 from includes.Config import ACTIVECAMPAIGN_URL, ACTIVECAMPAIGN_API_KEY
-import datetime, time, json
+#import datetime, time, json
 
 if __name__ == '__main__':
     ac = ActiveCampaign(ACTIVECAMPAIGN_URL,  ACTIVECAMPAIGN_API_KEY)
@@ -9,8 +9,8 @@ if __name__ == '__main__':
     # crows = campaigns['rows']
     
     # documentation points to limit of 20 items per page
-    campaign5open = ac.api('campaign/report_open_list?campaignid=92&page=2')
-    print json.dumps(campaign5open)
+    campaign5open = ac.api('campaign/report_open_list?campaignid=5&page=2')
+    #print json.dumps(campaign5open)
     # print ac.api('campaign/report_open_list?campaignid=5&page=1')
     #
     # campaign11fwd = ac.api('campaign/report_forward_list?campaignid=11&messageid=16')
@@ -24,9 +24,9 @@ if __name__ == '__main__':
     #
     # contact = ac.api('contact/view?id=1')
     #
-    # contact_list = ac.api('contact/list?ids=5')
+    #contact_list = ac.api('contact/list?ids=5')
     #
-    # contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=20&filter=0&public=0')
+    contact_paginator = ac.api('contact/paginator?sort=&offset=0&limit=100&filter=0&public=0')
     #
     # message_list = ac.api('message/list?ids=all&page=1')
     #

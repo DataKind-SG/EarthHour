@@ -21,13 +21,17 @@ List of valid modes:
 
 List of valid function names:
 * campaigns
-* campaign_report_open_lists^
-* campaign_report_link_lists^
-* campaign_report_unsubscribe_lists^
-* campaign_report_forward_lists^
+* campaign_report_open_lists
+* campaign_report_link_lists
+* campaign_report_unsubscribe_lists
+* campaign_report_forward_lists
+* campaign_report_unopen_lists
 * lists
 * contacts
 * message_lists
 
-^ These functions are available in both print and write modes.
 
+## References
+[Active Campaign API Wrappers](http://www.activecampaign.com/api/wrappers.php)  
+[Active Campaign Python Library](https://github.com/adulmec/active-campaign-python)
+  
