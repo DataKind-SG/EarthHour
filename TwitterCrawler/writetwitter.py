@@ -97,7 +97,9 @@ class WriteTwitter:
             created_at = time.strptime(user['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
             line.append(time.strftime('%Y-%m-%d', created_at))
 
-            line.append("\"%s\"" % user['description'])
+            user_desc = user['description'].replace('\n', '<br>').replace(',', ';').replace('"', "'")
+
+            line.append("\"%s\"" % user_desc)
             line.append(user['lang'])
             line.append("\"%s\"" % user['location'])
 
@@ -140,3 +142,50 @@ class WriteTwitter:
             full_line = ",".join(line).encode('utf8')
             self.file.write("%s\n" % full_line)
 
+    def write_hydrated_anon_users(self, r, map):
+        for user in r.get_iterator():
+            line = []
+            line.append(str(map[long(user['id_str'])]))
+
+            created_at = time.strptime(user['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
+            line.append(time.strftime('%Y-%m-%d', created_at))
+
+            user_desc = user['description'].replace('\n', '<br>').replace(',', ';').replace('"', "'")
+
+            line.append("\"%s\"" % user_desc)
+            line.append(user['lang'])
+            line.append("\"%s\"" % user['location'])
+
+            if user['time_zone'] is not None:
+                line.append(str(user['time_zone']))
+            else:
+                line.append('')
+
+            if user['utc_offset'] is not None:
+                line.append(str(user['utc_offset']))
+            else:
+                line.append('')
+
+            line.append(str(user["statuses_count"]))
+            line.append(str(user["favourites_count"]))
+            line.append(str(user["followers_count"]))
+            line.append(str(user["friends_count"]))
+            line.append(str(user["listed_count"]))
+
+            if user["contributors_enabled"]:
+                line.append("1")
+            else:
+                line.append("0")
+
+            if user["protected"]:
+                line.append("1")
+            else:
+                line.append("0")
+
+            if user["verified"]:
+                line.append("1")
+            else:
+                line.append("0")
+
+            full_line = ",".join(line).encode('utf8')
+            self.file.write("%s\n" % full_line)

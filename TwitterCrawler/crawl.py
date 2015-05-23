@@ -75,6 +75,37 @@ class Crawl:
             if os.path.isfile(file_name):
                 self.__paginate_hydrated_users(file_name, False)
 
+    def paginate_anon_users(self, anon_map):
+        header = 'anon_id,created_at,description,lang,location,time_zone,utc_offset,statuses_count,favourites_count,followers_count,friends_count,listed_count,contributors_enabled,protected,verified'
+
+        with open(anon_map, 'r') as id_file:
+            all_ids = id_file.read().splitlines()
+
+        n_ids = len(all_ids)
+
+        map = dict()
+        for row in all_ids:
+            tokens = row.split(',')
+            num_id = long(tokens[0])
+            map[num_id] = int(tokens[1])
+
+        int_all_ids = map.keys()
+        new_counter = 0
+        file_name = 'data/anon_users_hashtag_tweets.csv'
+        w = wt.WriteTwitter(file_name, header, datetime.date.today().strftime('%Y-%m-%d'))
+
+        while new_counter < n_ids:
+            old_counter = new_counter
+            new_counter = min(new_counter + 100, n_ids)
+            user_ids = ','.join(str(x) for x in int_all_ids[old_counter:new_counter])
+
+            success = False
+            while not success:
+                success = self.ta.get_hydrated_anon_users(user_ids, w, map)
+
+        w.close()
+
+
     def __paginate_hydrated_users(self, in_list, has_header):
         file_number = in_list[-2:]
 
@@ -127,10 +158,13 @@ def main():
 
     with warnings.catch_warnings():
         warnings.simplefilter('once')
-        for i in range(0, 2):
-            p = multiprocessing.Process(target=worker, args=(i,))
-            jobs.append(p)
-            p.start()
+        # for i in range(0, 2):
+        #     p = multiprocessing.Process(target=worker, args=(i,))
+        #     jobs.append(p)
+        #     p.start()
+
+        r = Crawl('twitter_apps_consumer_key_0.secret')
+        r.paginate_anon_users('data/hashtag_tweets_user_map.csv')
 
         # r.get_followers_of_followers()
 

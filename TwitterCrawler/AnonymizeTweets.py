@@ -4,17 +4,19 @@ import numpy as np
 
 class AnonymizeTweets:
     def __init__(self):
-        self.map_file = 'data/final/map/test_map.csv'
-        self.hashtag_dir = 'hashtag_tweets/*_tweets.csv'
+        self.map_file = 'data/test_map.csv'
+        self.hashtag_dir = 'data/hashtags/*_tweets.csv'
         self.chapter_dir = 'chapter_tweets/*_tweets.csv'
-        self.hashtag_tweet_file = 'data/final/hashtag_tweets.csv'
+        self.anon_hashtag_tweet_file = 'data/hashtag_tweets.csv'
+        self.anon_tweet_file = 'data/anon_hashtag_tweets.csv'
         self.chapters_tweet_file = 'data/final/chapters_tweets.csv'
-        self.log_file = 'data/final/tweet_log.csv'
-        self.new_map_file = 'data/final/map/tweet_map.csv'
+        self.log_file = 'data/tweet_log.csv'
+        self.new_map_file = 'data/hashtag_tweets_user_map.csv'
 
         self.map = dict()
-        self.__read_map()
-        self.rand = np.random.permutation(range(70000000, 80000000))
+        self.written_users = set()
+        # self.__read_map()
+        self.rand = np.random.permutation(range(80000001, 90000000))
         self.counter = 0
         self.tweet_header = 'anon_id,created_at,text,coordinates,lang,retweet_count,favorite_count,in_reply_to_user_id,place\n'
 
@@ -30,10 +32,15 @@ class AnonymizeTweets:
         if num_id not in self.map:
             self.map[num_id] = self.rand[self.counter]
             self.counter += 1
-            did_exist = False
+
+            anon_id = str(self.map[num_id])
+            map_writer = open(self.new_map_file, 'a')
+            map_writer.write('%s,%s\n' % (user_id, anon_id))
+            map_writer.close()
         else:
-            did_exist = True
-        return str(self.map[num_id]), did_exist
+            anon_id = str(self.map[num_id])
+
+        return anon_id
 
     def anon_hashtag_tweets(self):
         tweet_files = glob.glob(self.hashtag_dir)
@@ -41,7 +48,7 @@ class AnonymizeTweets:
 
         log_writer = open(self.log_file, 'w')
         log_writer.write('file,line count,self.counter\n')
-        tweet_writer = open(self.hashtag_tweet_file, 'w')
+        tweet_writer = open(self.anon_tweet_file, 'w')
         tweet_writer.write(self.tweet_header)
 
         for tweet_file in tweet_files:
@@ -88,12 +95,8 @@ class AnonymizeTweets:
         print 'Finished anon_chapter_tweets'
 
     def __process_tweet_row(self, row, tweet_writer):
-        anon_id, did_exist = self.__get_anon_value(row[0])
-        if not did_exist:
-            map_writer = open(self.new_map_file, 'a')
-            map_writer.write('%s,%s\n' % (row[0], str(anon_id)))
-            map_writer.close()
-            		
+        anon_id = self.__get_anon_value(row[0])
+
         # find first column that can be converted to number
         for i in range(6, 20):
             try:
@@ -103,26 +106,22 @@ class AnonymizeTweets:
             except:
                 continue
 
-        text_col = ';'.join(row[3 : retweet_count_col - 2])
+        text_col = ';'.join(row[3:retweet_count_col - 2])
         in_reply_to_user_id_col = retweet_count_col + 3
         if len(row) >= in_reply_to_user_id_col + 1:
             if len(row[in_reply_to_user_id_col]) != 0:
-                in_reply_to_anon_id, did_exist = self.__get_anon_value(row[in_reply_to_user_id_col])
+                in_reply_to_anon_id = self.__get_anon_value(row[in_reply_to_user_id_col])
                 row[in_reply_to_user_id_col] = in_reply_to_anon_id
-                if not did_exist:
-                    map_writer = open(self.new_map_file, 'a')
-                    map_writer.write('%s,%s\n' % (row[0], str(anon_id)))
-                    map_writer.close()
 
-        line = '%s,%s,"%s",%s,%s\n' % (anon_id, row[2], text_col, ','.join(row[retweet_count_col-2:in_reply_to_user_id-1]), ','.join(row[-2:]))
+        fixed_status = text_col.replace('"', "'").replace(',', ';')
+        line = '%s,%s,"%s",%s,%s\n' % (anon_id, row[2], fixed_status, ','.join(row[retweet_count_col-2:in_reply_to_user_id_col-1]), ','.join(row[-2:]))
         tweet_writer.write(line)
         return 1
-
 
 def main():
     at = AnonymizeTweets()
     at.anon_hashtag_tweets()
-    at.anon_chapter_tweets()
+    # at.anon_chapter_tweets()
 
 if __name__ == '__main__':
     main()
