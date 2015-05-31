@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  body {
+  font: 10px sans-serif;
+  }
+  .arc path {
+  stroke: #fff;
+  }
+</style>
+<body>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script>
+    var PIE_CHART_SECTORS_MAX = 7;
+    // Get the angle on the arc and then rotate by -90 degrees
+    var getAngle = function (d) {
+        return (180 / Math.PI * (d.startAngle + d.endAngle) / 2 - 90);
+    };
+
+    var width = 960,
+        height = 500,
+        radius = Math.min(width, height) / 2;
+    
+    // var color = d3.scale.ordinal()
+        // .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+    var color = d3.scale.category20();
+    
+    var arc = d3.svg.arc()
+        .outerRadius(radius - 10)
+        .innerRadius(0);
+    
+    var pie = d3.layout.pie()
+        .sort(null)
+        .value(function(d) { return d.count; });
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+      .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    
+    d3.csv("parsed_unsubscribe.csv", function(error, data) {
+    
+      data.forEach(function(d) {
+        d.count = +d.count;
+      });
+
+      var sorted_data = [];
+      for (var row in data) {
+        // console.log(data[row]);
+        sorted_data.push([data[row]['unsubreason'], data[row]['count']])
+      }
+      sorted_data.sort(function(a, b) {return b[1] - a[1]})
+      // console.log(sorted_data);
+
+      var data_big_sectors = [];
+      var i = 0;
+      PIE_CHART_SECTORS_MAX = data.length;
+      for (i = 0; i < PIE_CHART_SECTORS_MAX; i++) {
+        // console.log(sorted_data[i]);
+        data_big_sectors.push({'unsubreason': sorted_data[i][0], 'count': sorted_data[i][1]});
+        // console.log("Angel");
+      }
+      console.log(data_big_sectors);
+
+      var g = svg.selectAll(".arc")
+          .data(pie(data_big_sectors))
+        .enter().append("g")
+          .attr("class", "arc");
+
+      g.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { console.log(d.data.unsubreason);
+            console.log(color(d.data.unsubreason));
+            return color(d.data.unsubreason);
+          });
+
+      g.append("text")
+          .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ") " + "rotate(" + getAngle(d) + ")"; })
+          .attr("dy", ".35em")
+          .style("text-anchor", "middle")
+          .text(function(d) { return d.data.unsubreason; });
+    
+    });
+    
+  </script>

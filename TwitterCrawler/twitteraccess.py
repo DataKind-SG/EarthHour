@@ -215,3 +215,36 @@ class TwitterAccess:
             success = True
 
         return success
+
+    def get_hydrated_anon_users(self, user_ids, w, map):
+        endpoint = 'users'
+        self.__update_current_app(endpoint, 1)
+
+        args = {'user_id': user_ids,
+                'include_entities': 'false'}
+        try:
+            r = self.app[self.current_app_index].request('users/lookup', args)
+        except:
+            print 'Exception thrown 1: '
+            print self.app[self.current_app_index]
+            return False
+
+        try:
+            self.status[self.current_app_index][endpoint] = int(r.headers._store['x-rate-limit-remaining'][1])
+        except:
+            print 'Exception thrown 2: '
+            print self.app[self.current_app_index]
+            self.status[self.current_app_index][endpoint] -= 1
+
+        if r.status_code == 404:
+            success = True
+        elif r.status_code != 200:
+            print 'Exception 3: '
+            print self.app[self.current_app_index]
+            print r.status_code
+            success = False
+        else:
+            w.write_hydrated_anon_users(r, map)
+            success = True
+
+        return success
