@@ -4,17 +4,21 @@ import numpy as np
 
 class AnonymizeTweets:
     def __init__(self):
-        self.map_file = 'data/final/map/test_map.csv'
-        self.hashtag_dir = 'hashtag_tweets/*_tweets.csv'
+        self.map_file = 'data/test_map.csv'
+        self.hashtag_dir = 'data/hashtag_tweets.csv'
         self.chapter_dir = 'chapter_tweets/*_tweets.csv'
-        self.hashtag_tweet_file = 'data/final/hashtag_tweets.csv'
+        self.hashtag_tweet_file = 'data/hashtag_tweets.csv'
+        self.user_tweet_file = 'data/user_tweets.csv'
         self.chapters_tweet_file = 'data/final/chapters_tweets.csv'
-        self.log_file = 'data/final/tweet_log.csv'
+        self.log_file = 'data/tweet_log.csv'
         self.new_map_file = 'data/final/map/tweet_map.csv'
 
         self.map = dict()
-        self.__read_map()
-        self.rand = np.random.permutation(range(70000000, 80000000))
+        self.reverse_map = dict()
+        self.written_users = set()
+        # self.__read_map()
+        self.__reverse_read_map()
+        # self.rand = np.random.permutation(range(70000000, 80000000))
         self.counter = 0
         self.tweet_header = 'anon_id,created_at,text,coordinates,lang,retweet_count,favorite_count,in_reply_to_user_id,place\n'
 
@@ -24,6 +28,13 @@ class AnonymizeTweets:
             csv_map = csv.reader(map_reader)
             for row in csv_map:
                 self.map[long(row[0])] = int(row[1])
+
+    def __reverse_read_map(self):
+        with open(self.map_file, 'r') as map_reader:
+            map_reader.readline()
+            csv_map = csv.reader(map_reader)
+            for row in csv_map:
+                self.reverse_map[int(row[1])] = long(row[0])
 
     def __get_anon_value(self, user_id):
         num_id = long(user_id)
@@ -62,6 +73,35 @@ class AnonymizeTweets:
         tweet_writer.close()
         print 'Finished anon_hashtag_tweets'
 
+    def user_hashtag_tweets(self):
+        tweet_files = glob.glob(self.hashtag_dir)
+        tweet_files.sort()
+
+        log_writer = open(self.log_file, 'w')
+        log_writer.write('file,line count,self.counter\n')
+        user_writer = open(self.user_tweet_file, 'w')
+        user_writer.write('user_id,anon_id\n')
+
+        for tweet_file in tweet_files:
+            with open(tweet_file, 'r') as tweet_reader:
+                tweet_reader.readline()
+                csv_reader = csv.reader(x.replace('\0', '\n') for x in tweet_reader)
+                line_count = 0
+
+                for row in csv_reader:
+                    line_count += self.__get_user_from_tweet_row(row, user_writer)
+                    if line_count < 0:
+                        log_writer.write('errror with ' + row[0] + '\n')
+
+            log_writer = open(self.log_file, 'a')
+            log_writer.write('%s,%s,%s\n' % (tweet_file, str(line_count), str(self.counter)))
+            log_writer.close()
+
+            print 'Finished ' + tweet_file
+
+        user_writer.close()
+        print 'Finished user_hashtag_tweets'
+
     def anon_chapter_tweets(self):
         tweet_files = glob.glob(self.chapter_dir)
         tweet_files.sort()
@@ -93,7 +133,7 @@ class AnonymizeTweets:
             map_writer = open(self.new_map_file, 'a')
             map_writer.write('%s,%s\n' % (row[0], str(anon_id)))
             map_writer.close()
-            		
+
         # find first column that can be converted to number
         for i in range(6, 20):
             try:
@@ -118,11 +158,26 @@ class AnonymizeTweets:
         tweet_writer.write(line)
         return 1
 
+    def __get_user_from_tweet_row(self, row, user_writer):
+        anon_id = int(row[0])
+        if anon_id not in self.written_users:
+            self.written_users.add(anon_id)
+            if anon_id not in self.reverse_map:
+                added = -1
+            else:
+                user_writer.write('%s,%s\n' % (str(self.reverse_map[anon_id]), str(anon_id)))
+                added = 1
+        else:
+            added = 0
+
+        return added
+
 
 def main():
     at = AnonymizeTweets()
-    at.anon_hashtag_tweets()
-    at.anon_chapter_tweets()
+    # at.anon_hashtag_tweets()
+    # at.anon_chapter_tweets()
+    at.user_hashtag_tweets()
 
 if __name__ == '__main__':
     main()
